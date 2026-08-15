@@ -26,10 +26,10 @@ You can install this bookmarklet using either the **Loader Bookmarklet** (auto-u
 
 1. Create a new bookmark in your browser:
    - **Name**: `⚡ Amazon Now Deals`
-   - **URL**: Paste the following script (replace `USERNAME/REPO` with your GitHub repository path):
+   - **URL**: Paste the following script:
 
 ```javascript
-javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/USERNAME/REPO@main/amazon-now-deals.js?t='+Date.now();document.body.appendChild(s);})();
+javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/jairaj26/amazon-now-deals@main/amazon-now-deals.js?t='+Date.now();document.body.appendChild(s);})();
 ```
 
 > **Note**: Uses [jsDelivr CDN](https://www.jsdelivr.com/) for fast, cached global delivery. Updating `amazon-now-deals.js` in your `main` branch automatically delivers updates to your bookmarklet!
