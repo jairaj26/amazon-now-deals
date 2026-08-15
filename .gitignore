@@ -1,0 +1,14 @@
+# Local API response and network dump files
+AZNowCatNav.txt
+AZNowSearch.txt
+Response.txt
+Response2.txt
+SubCat.txt
+requests.txt
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
