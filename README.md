@@ -7,7 +7,8 @@ A lightweight, powerful browser bookmarklet that extracts and displays top deals
 ## ✨ Features
 
 - **Multi-Category Selection**: Select up to **2 categories** per fetch.
-- **Sorted by Discounts**: Automatically sorts all fetched items in descending order of savings / discount percentage (`% OFF`).
+- **Live Keyword Search**: Instant search bar to filter products by name in real time.
+- **Dynamic Sorting**: Sort deals on-the-fly by **Discount: High to Low** (default), **Price: Low to High**, or **Price: High to Low**.
 - **Responsive Grid**:
   - 🖥️ **Desktop**: 5 columns
   - 📱 **Mobile**: 3 columns

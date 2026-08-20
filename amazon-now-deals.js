@@ -6,6 +6,8 @@
  * 
  * Features:
  * - Select up to 2 categories per fetch
+ * - Live keyword search / filter in the new tab
+ * - Sort options: Discount (High to Low), Price (Low to High), Price (High to Low)
  * - Deduplicates products across categories by ASIN
  * - Displays deals in a responsive product card grid (5 columns desktop / 3 columns mobile)
  * - Highlights discount percentage badges clearly
@@ -339,60 +341,117 @@
         }
       }
 
-      // Sort items descending by discount percentage
+      // Initial sort descending by discount
       items.sort(function (a, b) {
         return b.d - a.d;
       });
 
-      // Build product cards HTML
-      var itemsHTML = items
-        .map(function (item) {
-          var safeTitle = (item.t || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+      // Build entire results document with client-side search & sorting
+      var itemsJson = JSON.stringify(items).replace(/<\/script>/gi, '<\\/script>');
 
-          return (
-            '<a class="card" href="https://www.amazon.in/dp/' +
-            item.a +
-            '" target="_blank" rel="noopener">' +
-            '<div class="img-wrap">' +
-            (item.d ? '<div class="discount-badge">' + item.d + '% OFF</div>' : '') +
-            '<img src="' +
-            item.img +
-            '" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
-            '</div>' +
-            '<div class="card-body">' +
-            '<div class="title" title="' +
-            safeTitle +
-            '">' +
-            safeTitle +
-            '</div>' +
-            (item.pz ? '<div class="pack-size">' + item.pz + '</div>' : '') +
-            '<div class="price-wrap">' +
-            (item.bp !== null ? '<span class="price">₹' + item.bp + '</span>' : '') +
-            (item.lp && item.lp !== item.bp ? '<span class="mrp">₹' + item.lp + '</span>' : '') +
-            '</div>' +
-            '</div>' +
-            '</a>'
-          );
-        })
-        .join('');
-
-      // Build entire results document
       var html =
         '<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' +
         catNames +
         ' — ' +
         items.length +
-        ' Deals</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6f8;color:#1a1a1a;padding:12px}.header{background:#fff;padding:12px 16px;border-radius:8px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}.header-title{font-size:16px;font-weight:700;color:#0f1111}.header-badge{background:#e8f0fe;color:#1a73e8;font-weight:600;font-size:12px;padding:4px 10px;border-radius:14px}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}@media(max-width:1024px){.grid{grid-template-columns:repeat(4,1fr);gap:8px}}@media(max-width:768px){body{padding:8px}.header{padding:10px 12px;margin-bottom:8px}.header-title{font-size:14px}.grid{grid-template-columns:repeat(3,1fr);gap:6px}}.card{display:flex;flex-direction:column;background:#fff;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden;text-decoration:none;color:inherit;position:relative;transition:transform .15s,box-shadow .15s;cursor:pointer}.card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.12);border-color:#cbd5e1}.img-wrap{width:100%;height:140px;background:#fafafa;position:relative;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}@media(max-width:768px){.img-wrap{height:105px;padding:4px}}.img-wrap img{max-width:100%;max-height:100%;object-fit:contain}.discount-badge{position:absolute;top:6px;left:6px;background:#cc0c39;color:#fff;font-weight:800;font-size:12px;line-height:1;padding:4px 7px;border-radius:4px;box-shadow:0 2px 5px rgba(204,12,57,.35);z-index:2}@media(max-width:768px){.discount-badge{top:4px;left:4px;font-size:10px;padding:3px 5px}}.card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1;justify-content:space-between;gap:6px}@media(max-width:768px){.card-body{padding:6px 6px 8px;gap:4px}}.title{font-size:12px;font-weight:600;line-height:1.35;color:#0f1111;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;min-height:32px}@media(max-width:768px){.title{font-size:11px;line-height:1.25;min-height:28px}}.pack-size{font-size:11px;color:#565959;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:768px){.pack-size{font-size:10px}}.price-wrap{margin-top:auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}.price{font-size:15px;font-weight:700;color:#0f1111}@media(max-width:768px){.price{font-size:13px}}.mrp{font-size:11px;color:#565959;text-decoration:line-through}@media(max-width:768px){.mrp{font-size:10px}}</style></head><body><div class=header><div class=header-title>' +
+        ' Deals</title><style>' +
+        '*{box-sizing:border-box;margin:0;padding:0}' +
+        'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6f8;color:#1a1a1a;padding:12px}' +
+        '.header{background:#fff;padding:14px 16px;border-radius:8px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:10px}' +
+        '.header-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}' +
+        '.header-title{font-size:16px;font-weight:700;color:#0f1111}' +
+        '.header-badge{background:#e8f0fe;color:#1a73e8;font-weight:600;font-size:12px;padding:4px 10px;border-radius:14px;white-space:nowrap}' +
+        '.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}' +
+        '.search-wrap{flex:1;min-width:180px}' +
+        '.search-wrap input{width:100%;padding:8px 12px;border:1px solid #d0d7de;border-radius:6px;font-size:13px;outline:none;background:#f9f9f9;font-family:inherit;transition:border-color .15s,background .15s}' +
+        '.search-wrap input:focus{border-color:#1a73e8;background:#fff}' +
+        '.sort-wrap{display:flex;align-items:center;gap:6px}' +
+        '.sort-label{font-size:12px;font-weight:600;color:#555;white-space:nowrap}' +
+        '.sort-wrap select{padding:8px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:13px;background:#fff;color:#111;outline:none;cursor:pointer;font-family:inherit}' +
+        '.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}' +
+        '@media(max-width:1024px){.grid{grid-template-columns:repeat(4,1fr);gap:8px}}' +
+        '@media(max-width:768px){' +
+        'body{padding:8px}' +
+        '.header{padding:10px 12px;margin-bottom:8px;gap:8px}' +
+        '.header-title{font-size:14px}' +
+        '.controls{flex-direction:column;align-items:stretch;gap:6px}' +
+        '.search-wrap{min-width:100%}' +
+        '.search-wrap input{padding:8px 10px;font-size:12px}' +
+        '.sort-wrap{justify-content:space-between}' +
+        '.sort-wrap select{flex:1;padding:7px 10px;font-size:12px}' +
+        '.grid{grid-template-columns:repeat(3,1fr);gap:6px}' +
+        '}' +
+        '.card{display:flex;flex-direction:column;background:#fff;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden;text-decoration:none;color:inherit;position:relative;transition:transform .15s,box-shadow .15s;cursor:pointer}' +
+        '.card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.12);border-color:#cbd5e1}' +
+        '.img-wrap{width:100%;height:140px;background:#fafafa;position:relative;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}' +
+        '@media(max-width:768px){.img-wrap{height:105px;padding:4px}}' +
+        '.img-wrap img{max-width:100%;max-height:100%;object-fit:contain}' +
+        '.discount-badge{position:absolute;top:6px;left:6px;background:#cc0c39;color:#fff;font-weight:800;font-size:12px;line-height:1;padding:4px 7px;border-radius:4px;box-shadow:0 2px 5px rgba(204,12,57,.35);z-index:2}' +
+        '@media(max-width:768px){.discount-badge{top:4px;left:4px;font-size:10px;padding:3px 5px}}' +
+        '.card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1;justify-content:space-between;gap:6px}' +
+        '@media(max-width:768px){.card-body{padding:6px 6px 8px;gap:4px}}' +
+        '.title{font-size:12px;font-weight:600;line-height:1.35;color:#0f1111;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;min-height:32px}' +
+        '@media(max-width:768px){.title{font-size:11px;line-height:1.25;min-height:28px}}' +
+        '.pack-size{font-size:11px;color:#565959;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+        '@media(max-width:768px){.pack-size{font-size:10px}}' +
+        '.price-wrap{margin-top:auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}' +
+        '.price{font-size:15px;font-weight:700;color:#0f1111}' +
+        '@media(max-width:768px){.price{font-size:13px}}' +
+        '.mrp{font-size:11px;color:#565959;text-decoration:line-through}' +
+        '@media(max-width:768px){.mrp{font-size:10px}}' +
+        '.no-results{text-align:center;padding:40px 20px;color:#666;font-size:14px;background:#fff;border-radius:8px;border:1px solid #e2e8f0}' +
+        '</style></head><body>' +
+        '<div class=header>' +
+        '<div class=header-top>' +
+        '<div class=header-title>' +
         catNames +
-        '</div><div class=header-badge>' +
+        '</div>' +
+        '<div class=header-badge id=countBadge>' +
         items.length +
-        ' items (by discount)</div></div><div class=grid>' +
-        itemsHTML +
-        '</div></body></html>';
+        ' items</div>' +
+        '</div>' +
+        '<div class=controls>' +
+        '<div class=search-wrap><input type=search id=searchInput placeholder="Search deals..." autocomplete=off></div>' +
+        '<div class=sort-wrap><span class=sort-label>Sort:</span><select id=sortSelect><option value=discount-desc selected>Discount: High to Low</option><option value=price-asc>Price: Low to High</option><option value=price-desc>Price: High to Low</option></select></div>' +
+        '</div>' +
+        '</div>' +
+        '<div id=grid class=grid></div>' +
+        '<div id=noResults class=no-results style="display:none">No matching items found</div>' +
+        '<script>' +
+        'var rawItems = ' +
+        itemsJson +
+        ';' +
+        'function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}' +
+        'function render(list){' +
+        'var g=document.getElementById("grid");' +
+        'var nr=document.getElementById("noResults");' +
+        'if(!list.length){g.innerHTML="";nr.style.display="block";return;}' +
+        'nr.style.display="none";' +
+        'g.innerHTML=list.map(function(e){' +
+        'var st=esc(e.t);' +
+        'return "<a class=card href=\\"https://www.amazon.in/dp/"+e.a+"\\" target=_blank rel=noopener>"' +
+        '+ "<div class=img-wrap>" + (e.d?"<div class=discount-badge>"+e.d+"% OFF</div>":"")' +
+        '+ "<img src=\\""+e.img+"\\" loading=lazy onerror=\\"this.remove()\\"></div>"' +
+        '+ "<div class=card-body><div class=title title=\\""+st+"\\">"+st+"</div>"' +
+        '+ (e.pz?"<div class=pack-size>"+esc(e.pz)+"</div>":"")' +
+        '+ "<div class=price-wrap>"+(e.bp!==null?"<span class=price>₹"+e.bp+"</span>":"")+(e.lp&&e.lp!==e.bp?"<span class=mrp>₹"+e.lp+"</span>":"")+"</div></div></a>";' +
+        '}).join("");' +
+        '}' +
+        'function update(){' +
+        'var q=(document.getElementById("searchInput").value||"").trim().toLowerCase();' +
+        'var sm=document.getElementById("sortSelect").value;' +
+        'var list=rawItems.filter(function(it){return !q || (it.t && it.t.toLowerCase().indexOf(q)>=0);});' +
+        'if(sm==="discount-desc"){list.sort(function(a,b){return b.d-a.d});}' +
+        'else if(sm==="price-asc"){list.sort(function(a,b){return ((a.bp===null||a.bp===undefined)?1e9:a.bp)-((b.bp===null||b.bp===undefined)?1e9:b.bp);});}' +
+        'else if(sm==="price-desc"){list.sort(function(a,b){return ((b.bp===null||b.bp===undefined)?-1:b.bp)-((a.bp===null||a.bp===undefined)?-1:a.bp);});}' +
+        'render(list);' +
+        'var cb=document.getElementById("countBadge");' +
+        'cb.textContent=q ? (list.length+" of "+rawItems.length+" items") : (list.length+" items");' +
+        '}' +
+        'document.getElementById("searchInput").addEventListener("input",update);' +
+        'document.getElementById("sortSelect").addEventListener("change",update);' +
+        'update();' +
+        '<\/script></body></html>';
 
       var tab = window.open('', '_blank');
       if (tab) {
