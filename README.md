@@ -6,15 +6,16 @@ A lightweight, powerful browser bookmarklet that extracts and displays top deals
 
 ## ✨ Features
 
+- **Instant Keyword Search Deals**: Type any keyword (e.g. *"sweets"*, *"chips"*, *"paneer"*) to automatically fetch, paginate, and sort all matching results across all pages without manual DOM scrolling.
 - **Multi-Category Selection**: Select up to **2 categories** per fetch.
-- **Live Keyword Search**: Instant search bar to filter products by name in real time.
+- **In-Page Live Filter**: Instant search bar in the results tab to filter products by name in real time.
 - **Dynamic Sorting**: Sort deals on-the-fly by **Discount: High to Low** (default), **Price: Low to High**, or **Price: High to Low**.
 - **Responsive Grid**:
   - 🖥️ **Desktop**: 5 columns
   - 📱 **Mobile**: 3 columns
 - **High-Visibility Discount Badges**: Clear red badge displaying `-XX% OFF` overlaid on each product card.
 - **1-Click Navigation**: The entire product card is clickable and links directly to the Amazon product page (`https://www.amazon.in/dp/{asin}`).
-- **De-duplication**: Aggregates and deduplicates identical ASINs across multiple categories.
+- **De-duplication**: Aggregates and deduplicates identical ASINs across multiple categories / search pages.
 - **Safe & Private**: Runs directly in your browser using your active Amazon session. No credentials or personal data are stored or transmitted elsewhere.
 
 ---
@@ -48,9 +49,9 @@ If your browser restricts external scripts via Content Security Policy (CSP), co
 1. Open [Amazon Now / Tez](https://www.amazon.in/tez/browse/home) in your web browser (Chrome, Edge, Safari, Firefox, or mobile browsers).
 2. Click your **`⚡ Amazon Now Deals`** bookmark.
 3. A floating **"Deals"** button will appear at the bottom right.
-4. Click **"Deals"** to open the category menu:
-   - Tap **1 or 2 categories** to select them (`✓`).
-   - Click the **"Fetch Deals"** button.
+4. Click **"Deals"** to open the menu:
+   - **Option A (Keyword Search)**: Type any keyword (e.g. *sweets*) and click **"Fetch Keyword Deals"** to fetch and sort all matching items across all pages.
+   - **Option B (Category Deals)**: Select **1 or 2 categories** (`✓`) and click **"Fetch Deals"**.
 5. A new tab will open with the complete, sorted grid of deals!
 
 ---
