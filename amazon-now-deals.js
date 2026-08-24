@@ -276,33 +276,33 @@
   // Header inside Popup
   var hdr = document.createElement('div');
   hdr.style.cssText =
-    'display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:6px;';
+    'display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:8px;';
   hdr.innerHTML =
     '<div style="font-weight:700;font-size:13px;color:#111">Amazon Now Deals</div><div id="__aznowClose" style="cursor:pointer;font-size:16px;color:#888;padding:0 6px;line-height:1">✕</div>';
   panel.appendChild(hdr);
 
-  // Keyword Search Section
+  // Section 1 (Top): Keyword Search
   var searchSec = document.createElement('div');
-  searchSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:8px;';
+  searchSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
   searchSec.innerHTML =
-    '<div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;">Search Keyword Deals</div>' +
-    '<input type="text" id="__aznowKwInput" placeholder="e.g. sweets, chips, paneer..." value="' +
+    '<div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;">Search Any Product</div>' +
+    '<input type="text" id="__aznowKwInput" placeholder="Type item (e.g. sweets, milk)..." value="' +
     initialKeyword.replace(/"/g, '&quot;') +
-    '" style="width:100%;padding:7px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:12px;outline:none;box-sizing:border-box;font-family:inherit;">' +
-    '<button id="__aznowKwBtn" style="width:100%;padding:8px;background:#ffd814;border:1px solid #fcd200;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;cursor:pointer;text-align:center;box-sizing:border-box;touch-action:manipulation;">🔍 Fetch Keyword Deals</button>';
+    '" style="width:100%;padding:8px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:12px;outline:none;box-sizing:border-box;font-family:inherit;">' +
+    '<button id="__aznowKwBtn" style="width:100%;padding:8px;background:#ffd814;border:1px solid #fcd200;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;cursor:not-allowed;text-align:center;box-sizing:border-box;touch-action:manipulation;opacity:0.5;">Search Deals</button>';
   panel.appendChild(searchSec);
 
   // Section Divider
   var divider = document.createElement('div');
   divider.style.cssText =
-    'font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:center;margin:4px 0 6px;letter-spacing:0.5px;border-top:1px solid #eee;padding-top:6px;';
-  divider.textContent = '— OR BY CATEGORY (MAX 2) —';
+    'font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:center;margin:2px 0 6px;letter-spacing:0.5px;border-top:1px solid #eee;padding-top:8px;';
+  divider.textContent = '— OR BROWSE CATEGORIES (MAX 2) —';
   panel.appendChild(divider);
 
-  // Scrollable Category List
+  // Section 2 (Bottom): Scrollable Category List
   var list = document.createElement('div');
   list.style.cssText =
-    'overflow-y:auto;flex:1;max-height:36vh;padding-right:2px;display:flex;flex-direction:column;gap:3px;margin:2px 0 6px;-webkit-overflow-scrolling:touch;';
+    'overflow-y:auto;flex:1;max-height:34vh;padding-right:2px;display:flex;flex-direction:column;gap:3px;margin:2px 0 6px;-webkit-overflow-scrolling:touch;';
   panel.appendChild(list);
 
   // Fetch Category Action Button
@@ -331,6 +331,27 @@
   var selectedCategories = [];
   var categoryButtons = [];
 
+  // Dynamic state updater for Keyword Search Button
+  function updateSearchUI() {
+    var val = (kwInput.value || '').trim();
+    if (val.length > 0) {
+      kwBtn.disabled = false;
+      kwBtn.style.opacity = '1';
+      kwBtn.style.cursor = 'pointer';
+      var preview = val.length > 14 ? val.slice(0, 14) + '...' : val;
+      kwBtn.textContent = '🔍 Search Deals for "' + preview + '"';
+    } else {
+      kwBtn.disabled = true;
+      kwBtn.style.opacity = '0.5';
+      kwBtn.style.cursor = 'not-allowed';
+      kwBtn.textContent = 'Search Deals';
+    }
+  }
+
+  kwInput.addEventListener('input', updateSearchUI);
+  updateSearchUI(); // Initialize based on pre-detected query
+
+  // Dynamic state updater for Category UI
   function updateCategoryUI() {
     categoryButtons.forEach(function (btn) {
       var isSelected = selectedCategories.some(function (item) {
@@ -408,8 +429,8 @@
 
   function setAllControlsDisabled(disabled) {
     kwBtn.disabled = disabled;
-    kwBtn.style.opacity = disabled ? '0.7' : '1';
-    kwBtn.style.cursor = disabled ? 'wait' : 'pointer';
+    kwBtn.style.opacity = disabled ? '0.7' : (kwInput.value.trim() ? '1' : '0.5');
+    kwBtn.style.cursor = disabled ? 'wait' : (kwInput.value.trim() ? 'pointer' : 'not-allowed');
     kwInput.disabled = disabled;
     fetchCatBtn.disabled = disabled;
     fetchCatBtn.style.opacity = disabled ? '0.7' : (selectedCategories.length ? '1' : '0.5');
@@ -424,7 +445,6 @@
   async function handleKeywordSearch() {
     var kw = kwInput.value.trim();
     if (!kw) {
-      alert('Please enter a search keyword (e.g. sweets, chips, paneer)');
       kwInput.focus();
       return;
     }
@@ -441,7 +461,7 @@
       var emptyBatches = 0;
 
       while (hasMore && page < 30) {
-        kwBtn.textContent = 'Searching "' + kw + '" (p.' + (page + 1) + ')... (' + items.length + ')';
+        kwBtn.textContent = 'Searching "' + (kw.length > 10 ? kw.slice(0, 10) + '...' : kw) + '" (p.' + (page + 1) + ')... (' + items.length + ')';
 
         try {
           var res = await fetch(buildSearchUrl(kw, offset), {
@@ -495,8 +515,8 @@
 
       openResultsTab('Search: "' + kw + '"', items);
     } finally {
-      kwBtn.textContent = '🔍 Fetch Keyword Deals';
       setAllControlsDisabled(false);
+      updateSearchUI();
       updateCategoryUI();
     }
   }
@@ -601,6 +621,7 @@
     } finally {
       setAllControlsDisabled(false);
       selectedCategories = [];
+      updateSearchUI();
       updateCategoryUI();
     }
   };
