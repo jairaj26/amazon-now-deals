@@ -45,7 +45,7 @@ If your browser restricts external scripts via Content Security Policy (CSP), co
 
 ## 📖 How to Use
 
-1. Open [Amazon Now / Tez](https://www.amazon.in/now) in your web browser (Chrome, Edge, Safari, Firefox, or mobile browsers).
+1. Open [Amazon Now / Tez](https://www.amazon.in/tez/browse/home) in your web browser (Chrome, Edge, Safari, Firefox, or mobile browsers).
 2. Click your **`⚡ Amazon Now Deals`** bookmark.
 3. A floating **"Deals"** button will appear at the bottom right.
 4. Click **"Deals"** to open the category menu:
