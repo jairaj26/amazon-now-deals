@@ -8,12 +8,13 @@ A lightweight, powerful browser bookmarklet that extracts and displays top deals
 
 - **Instant Keyword Search Deals**: Type any keyword (e.g. *"sweets"*, *"chips"*, *"paneer"*) to automatically fetch, paginate, and sort all matching results across all pages without manual DOM scrolling.
 - **Multi-Category Selection**: Select up to **2 categories** per fetch.
-- **In-Page Live Filter**: Instant search bar in the results tab to filter products by name in real time.
+- **In-Page Live Search & Filter**: Instant search bar in the results tab to filter products by title or brand in real time.
+- **Brand & Category Dropdown Filters**: Filter deals dynamically by specific brands and categories with real-time deal count badges.
 - **Dynamic Sorting**: Sort deals on-the-fly by **Discount: High to Low** (default), **Price: Low to High**, or **Price: High to Low**.
 - **Responsive Grid**:
   - 🖥️ **Desktop**: 5 columns
   - 📱 **Mobile**: 3 columns
-- **High-Visibility Discount Badges**: Clear red badge displaying `-XX% OFF` overlaid on each product card.
+- **High-Visibility Green Discount Badges**: Two-line green badge (`55%` / `Off`) clearly overlaid on each product card.
 - **1-Click Navigation**: The entire product card is clickable and links directly to the Amazon product page (`https://www.amazon.in/dp/{asin}`).
 - **De-duplication**: Aggregates and deduplicates identical ASINs across multiple categories / search pages.
 - **Safe & Private**: Runs directly in your browser using your active Amazon session. No credentials or personal data are stored or transmitted elsewhere.
