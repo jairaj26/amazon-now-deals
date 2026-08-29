@@ -21,39 +21,59 @@ A lightweight, powerful browser bookmarklet that extracts and displays top deals
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Setup
 
-You can install this bookmarklet using either the **Loader Bookmarklet** (auto-updates when this repository is updated) or the **Standalone Bookmarklet** (runs completely offline without external network dependencies).
+Choose your device below for easy step-by-step setup:
 
-### Option 1: Loader Bookmarklet (Recommended)
-
-1. Create a new bookmark in your browser:
-   - **Name**: `⚡ Amazon Now Deals`
-   - **URL**: Paste the following script:
-
+### 💻 On PC / Mac (Chrome, Edge, Brave, Safari, Firefox)
+1. Show your Bookmarks bar (`Ctrl + Shift + B` on Windows or `Cmd + Shift + B` on Mac).
+2. Right-click the bookmarks bar and click **"Add page..."** or **"Add bookmark"**.
+3. Set the **Name** to: `⚡ Amazon Deals`
+4. In the **URL / Address** field, copy and paste this code:
 ```javascript
 javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/jairaj26/amazon-now-deals@main/amazon-now-deals.js?t='+Date.now();document.body.appendChild(s);})();
 ```
-
-> **Note**: Uses [jsDelivr CDN](https://www.jsdelivr.com/) for fast, cached global delivery. Updating `amazon-now-deals.js` in your `main` branch automatically delivers updates to your bookmarklet!
+5. Click **Save**.
 
 ---
 
-### Option 2: Standalone Bookmarklet (No External Scripts)
+### 📱 On Mobile (Android / iPhone)
 
-If your browser restricts external scripts via Content Security Policy (CSP), copy and paste the complete standalone script from [`amazon-now-deals-bookmarklet.txt`](amazon-now-deals-bookmarklet.txt) into your bookmark's URL.
+#### **Google Chrome (Android / iOS)**:
+1. Bookmark any webpage you are currently on by tapping the **Three dots (⋮)** > **Star (⭐)**.
+2. Tap **Edit** (or go to **Bookmarks** > find the bookmark > tap **⋮** > **Edit**).
+3. Change the **Name** to: `⚡ Amazon Deals`
+4. Delete the URL and paste the script code from above into the **URL** field.
+5. Tap the back arrow to save.
+
+#### **Safari (iPhone / iPad)**:
+1. Bookmark this page or any webpage (tap the **Share icon** > **Add Bookmark** > **Save**).
+2. Open your bookmarks list (tap the **Book icon**), tap **Edit** at the bottom.
+3. Tap the bookmark you just created:
+   - Change the name to `⚡ Amazon Deals`.
+   - Clear the URL and paste the script code from above.
+4. Tap **Done**.
 
 ---
 
 ## 📖 How to Use
 
-1. Open [Amazon Now / Tez](https://www.amazon.in/tez/browse/home) in your web browser (Chrome, Edge, Safari, Firefox, or mobile browsers).
-2. Click your **`⚡ Amazon Now Deals`** bookmark.
-3. A floating **"Deals"** button will appear at the bottom right.
-4. Click **"Deals"** to open the menu:
-   - **Option A (Keyword Search)**: Type any keyword (e.g. *sweets*) and click **"Fetch Keyword Deals"** to fetch and sort all matching items across all pages.
-   - **Option B (Category Deals)**: Select **1 or 2 categories** (`✓`) and click **"Fetch Deals"**.
-5. A new tab will open with the complete, sorted grid of deals!
+1. Open your web browser (Chrome, Safari, Edge, Brave, etc.) and go to:
+   ```
+   https://www.amazon.in/tez/browse/home
+   ```
+   > 📱 **Note for Mobile Users**: Copy the link above and paste it directly into your mobile browser's address bar. Do not tap it as a clickable link, as your phone may open the Amazon mobile app instead of the web browser.
+
+2. Run the bookmarklet:
+   - **On PC**: Click `⚡ Amazon Deals` on your bookmarks bar.
+   - **On Mobile Chrome**: Tap the address bar, type `Amazon Deals`, and tap the bookmark result with the ⭐ star icon.
+   - **On Mobile Safari**: Open your bookmarks menu and tap `⚡ Amazon Deals`.
+
+3. A floating yellow **"Deals"** button will appear in the bottom-right corner.
+4. Click **"Deals"**:
+   - **Search Any Product**: Type a keyword (e.g. *sweets*, *chips*, *milk*) and click **"Search Deals"** to fetch all pages of deals automatically without scrolling.
+   - **Browse Categories**: Select 1 or 2 categories (`✓`) and click **"Fetch Deals"**.
+5. A new tab will open displaying all available deals sorted by the highest discount percentage!
 
 ---
 
