@@ -79,10 +79,57 @@ javascript:(function(){var s=document.createElement('script');s.src='https://cdn
 
 ## 📂 Repository Structure
 
-- [`amazon-now-deals.js`](amazon-now-deals.js) - Full, readable, and documented developer source code.
+- [`bot/`](bot/) - Automated Telegram deals bot (Python) with concurrent category workers, cache deduplication, and price-drop tracking.
+- [`amazon-now-deals.js`](amazon-now-deals.js) - Full, readable, and documented developer source code for browser bookmarklet.
 - [`amazon-now-deals-bookmarklet.txt`](amazon-now-deals-bookmarklet.txt) - Standalone minified bookmarklet code.
 - [`loader-bookmarklet.txt`](loader-bookmarklet.txt) - 1-line bookmarklet loader template.
+- [`.env.example`](.env.example) - Template environment file for the Telegram bot.
 - [`README.md`](README.md) - Project documentation.
+
+---
+
+## 🤖 Automated Telegram Deals Bot (Python)
+
+An automated background scanner built to monitor top deals across high-yield Amazon Now categories and alert to a Telegram channel/chat.
+
+### ✨ Bot Features
+- **Concurrent Category Workers**: 5 worker threads scanning high-deal categories in parallel.
+- **Full Offset Pagination**: Traverses all widget batches per category to find deep discounts.
+- **Weekly Deduplication & Cooldown**: Items at the same price alert at most once every 7 days.
+- **Instant Price Drop Alerts**: If a product's price drops further, alerts immediately regardless of cooldown.
+- **30-Day Cache Auto-Pruning**: Keeps `data/posted_deals.json` compact and clean.
+
+### 🚀 Bot Setup & Usage
+
+1. **Install Requirements**:
+   ```bash
+   pip install -r bot/requirements.txt
+   ```
+
+2. **Configure `.env`**:
+   Copy `.env.example` to `.env`:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_CHAT_ID=your_chat_id_here
+   AMAZON_COOKIE=your_amazon_session_cookie_here
+   AMAZON_BRAND_ID=your_brand_id_here
+   MIN_DISCOUNT=70
+   MAX_WORKERS=5
+   ```
+
+3. **Run the Bot**:
+   - **Dry Run (Test scraping without sending Telegram messages)**:
+     ```bash
+     python -m bot.main --dry-run
+     ```
+   - **Live Alerting Run**:
+     ```bash
+     python -m bot.main
+     ```
+   - **Custom Discount Threshold**:
+     ```bash
+     python -m bot.main --min-discount 60
+     ```
 
 ---
 

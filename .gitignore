@@ -5,6 +5,7 @@ Response.txt
 Response2.txt
 SubCat.txt
 requests.txt
+*Temp.txt
 *.log
 
 # OS & Editor files
@@ -12,3 +13,9 @@ requests.txt
 Thumbs.db
 .vscode/
 .idea/
+
+# Environment variables & local bot cache
+.env
+data/
+__pycache__/
+*.py[cod]

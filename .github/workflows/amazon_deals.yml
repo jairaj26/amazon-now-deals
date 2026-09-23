@@ -1,0 +1,72 @@
+name: Amazon Now Deals Alert
+
+on:
+  schedule:
+    # Built-in GitHub Actions schedule: hourly from 06:01 AM to 12:01 AM (midnight) IST
+    # 06:01 IST = 00:31 UTC, 12:01 AM IST = 18:31 UTC (UTC +5:30)
+    # Dormant between 00:02 AM and 06:00 AM IST while stores are closed
+    - cron: '31 0-18 * * *'
+
+  workflow_dispatch:
+    inputs:
+      min_discount:
+        description: 'Minimum Discount % threshold'
+        required: false
+        default: '70'
+      dry_run:
+        description: 'Dry run (test scrape without posting to Telegram)'
+        required: false
+        default: 'false'
+        type: boolean
+
+  repository_dispatch:
+    types: [hourly_deals_scan, amazon_scan]
+
+jobs:
+  scrape-and-alert:
+    name: Scrape Deals & Alert Telegram
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r bot/requirements.txt
+
+      - name: Restore Deals Cache
+        uses: actions/cache@v4
+        with:
+          path: data/posted_deals.json
+          key: amazon-deals-cache-${{ github.run_id }}
+          restore-keys: |
+            amazon-deals-cache-
+
+      - name: Run Amazon Now Deals Scraper
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          AMAZON_BRAND_ID: ${{ secrets.AMAZON_BRAND_ID }}
+          AMAZON_COOKIE: ${{ secrets.AMAZON_COOKIE }}
+          MIN_DISCOUNT: ${{ github.event.client_payload.min_discount || inputs.min_discount || secrets.MIN_DISCOUNT || '70' }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          MAX_WORKERS: '5'
+          CACHE_FILE: data/posted_deals.json
+        run: |
+          python -m bot.main
+
+      - name: Save Deals Cache
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: data/posted_deals.json
+          key: amazon-deals-cache-${{ github.run_id }}
