@@ -68,26 +68,167 @@
     216450600031: 1 // Ice Cream Store
   };
 
-  // Pre-configured category list
-  var categoriesRaw =
-    'Grocery~Atta Dal Rice,204870002031;Tea Coffee,204924535031;Cooking Oil,218876211031;Paan Corner,219564338031|' +
-    'Kitchen~Kitchen Ess.,206264743031|' +
-    'Snacks & Bev.~Beverages,204924538031;Chips & Namkeen,215540425031|' +
-    'Dairy & Frozen~Dairy,204869998031;Ice Cream Store,216450600031|' +
-    'Fresh Produce~Vegetables,218833871031;Fruits,218833884031;Meat & Seafood,218876203031|' +
-    'Personal Care~Bath & Body,204992653031;Men Grooming,204992619031;Hair Care,204992645031;Feminine Care,204992654031;Oral Care,205015906031;Sexual Wellness,205015909031|' +
-    'Home Care~Detergent,204952381031;Cleaners,204952388031|' +
-    'Baby & Health~Baby Care,211421666031;Protein,205015896031';
-
-  var categoryGroups = categoriesRaw.split('|').map(function (groupStr) {
-    var parts = groupStr.split('~');
-    return [
-      parts[0],
-      parts[1].split(';').map(function (sub) {
-        return sub.split(',');
-      })
-    ];
-  });
+  // Pre-configured hierarchical categories and subcategories
+  var categoriesData = [
+    {
+      name: 'Grocery & Staples',
+      subs: [
+        ['Atta & Flours', '204870009031'],
+        ['Rice & Grains', '204870014031'],
+        ['Dals & Pulses', '204870007031'],
+        ['Chana & Whole Pulses', '204870004031'],
+        ['Cooking Oils & Ghee', '204870005031'],
+        ['Olive & Premium Oils', '204870010031'],
+        ['Spices & Masalas', '204870013031'],
+        ['Salt & Sugar', '204870008031'],
+        ['Poha & Daliya', '204870012031'],
+        ['Soya Chunks', '204870016031'],
+        ['Instant Noodles & Pasta', '219564344031']
+      ]
+    },
+    {
+      name: 'Dairy, Bread & Eggs',
+      subs: [
+        ['Fresh Milk', '204870018031'],
+        ['Bread & Bakery', '204870003031'],
+        ['Curd & Yogurt', '204870006031'],
+        ['Paneer & Fresh Dairy', '204870011031'],
+        ['Cheese & Butter', '204870015031'],
+        ['Fresh Cream', '204870019031'],
+        ['Dairy Whitener & Powder', '204924567031'],
+        ['Plant & Coconut Milk', '204870001031']
+      ]
+    },
+    {
+      name: 'Snacks, Sweets & Treats',
+      subs: [
+        ['Chocolates', '204924526031'],
+        ['Premium Chocolates', '204924531031'],
+        ['Chips & Crisps', '204924530031'],
+        ['Indian Namkeen', '215540425031'],
+        ['Bhujia & Sev', '204924562031'],
+        ['Wafers & Biscuits', '204924537031'],
+        ['Kurkure & Extruded', '204924550031'],
+        ['Popcorn', '204924539031'],
+        ['Nachos & Mad Angles', '204924540031'],
+        ['Sweets & Mithai', '204924552031'],
+        ['Chikki & Peanut Treats', '204924571031'],
+        ['Roasted Makhana', '204924555031'],
+        ['Candies & Marshmallows', '204924572031'],
+        ['Cakes & Brownies', '204924573031'],
+        ['Chewing Gums & Mints', '204924561031'],
+        ['Dry Fruits & Nuts', '204924525031'],
+        ['Almonds & Cashews (Raw)', '204924569031']
+      ]
+    },
+    {
+      name: 'Beverages & Drinks',
+      subs: [
+        ['Cold Drinks & Sodas', '204924556031'],
+        ['Tea (Leaf & Bags)', '204924559031'],
+        ['Coffee (Instant & Filter)', '204924558031'],
+        ['Fruit Juices & Nectars', '204924568031'],
+        ['Milkshakes & Flavored Milk', '204870017031'],
+        ['Lassi & Buttermilk', '204924557031'],
+        ['Club Soda & Mixes', '204924563031'],
+        ['Electrolytes & Energy Drinks', '205015903031']
+      ]
+    },
+    {
+      name: 'Ice Creams & Frozen',
+      subs: [
+        ['Gourmet Ice Cream Tubs', '216450650031'],
+        ['Ice Cream Cones & Cornettos', '216450641031'],
+        ['Ice Cream Sticks & Bars', '216450655031'],
+        ['Ice Cubes & Party Ice', '216450649031'],
+        ['Ice Cream Store', '216450600031']
+      ]
+    },
+    {
+      name: 'Personal Care & Beauty',
+      subs: [
+        ['Facial Cleansers & Face Wash', '204992615031'],
+        ['Sunscreens (SPF)', '204992651031'],
+        ['Face Serums & Treatments', '204992652031'],
+        ['Face Creams & Moisturizers', '204992632031'],
+        ['Bathing Soaps & Bars', '204992631031'],
+        ['Body Wash & Shower Gel', '204992628031'],
+        ['Body Lotions', '204992627031'],
+        ['Hair Care & Shampoos', '204992645031'],
+        ['Hair Growth Serums', '205015907031'],
+        ['Men Grooming & Shaving', '204992619031'],
+        ['Feminine Hygiene', '204992654031'],
+        ['Makeup & Lipsticks', '204992616031']
+      ]
+    },
+    {
+      name: 'Oral Care & Health',
+      subs: [
+        ['Toothpaste', '205015906031'],
+        ['Toothbrushes', '205015905031'],
+        ['Mouthwash', '205015911031'],
+        ['Teeth Whitening & Floss', '205015902031'],
+        ['Whey & Plant Protein', '205015895031'],
+        ['Nutrition Drinks (Ensure)', '205015896031'],
+        ['Creatine Monohydrate', '205015912031'],
+        ['Multivitamins & Supplements', '205015904031'],
+        ['Condoms & Sexual Wellness', '205015909031'],
+        ['Lubricants', '205015908031']
+      ]
+    },
+    {
+      name: 'Home Care & Cleaning',
+      subs: [
+        ['Liquid Detergent (Matic)', '204952379031'],
+        ['Detergent Powders', '204952381031'],
+        ['Detergent Bars', '204952380031'],
+        ['Detergent Pods & Capsules', '204952375031'],
+        ['Fabric Conditioners', '204952386031'],
+        ['Fabric Whiteners (Vanish)', '204952385031'],
+        ['Dishwash Gels & Bars', '204924564031'],
+        ['Dishwasher Tablets & Salts', '204924565031'],
+        ['Floor Cleaners (Lizol)', '204952368031'],
+        ['Toilet Cleaners (Harpic)', '204952388031'],
+        ['Bathroom Cleaners', '204952387031'],
+        ['Glass & Machine Cleaners', '204952373031'],
+        ['Antiseptic Liquids (Dettol)', '204952378031'],
+        ['Puja Needs & Agarbatti', '204952383031'],
+        ['Dog Food', '204952372031'],
+        ['Cat Food', '204952374031']
+      ]
+    },
+    {
+      name: 'Kitchen & Home',
+      subs: [
+        ['Pressure Cookers', '206264740031'],
+        ['Storage Containers', '206264741031'],
+        ['Lunch Boxes & Tiffins', '206264742031'],
+        ['Insulated Bottles & Flasks', '206264743031'],
+        ['Fast Chargers & Cables', '205015892031'],
+        ['Cloth Stands & Hangers', '204952370031']
+      ]
+    },
+    {
+      name: 'Fresh Produce & Meat',
+      subs: [
+        ['Fresh Vegetables', '218833871031'],
+        ['Fresh Fruits', '218833884031'],
+        ['Meat & Seafood', '218876203031']
+      ]
+    },
+    {
+      name: 'Baby Care',
+      subs: [
+        ['Diapers & Baby Care', '211421666031']
+      ]
+    },
+    {
+      name: 'Paan Corner',
+      subs: [
+        ['Rolling Papers & Lighters', '219564338031']
+      ]
+    }
+  ];
 
   // URL builders
   function buildCategoryUrl(nodeId, offset) {
@@ -366,7 +507,7 @@
   // Popup Menu Panel
   var panel = document.createElement('div');
   panel.style.cssText =
-    'display:none;flex-direction:column;margin-bottom:8px;background:#fff;padding:12px;border-radius:10px;border:1px solid #d0d7de;box-shadow:0 8px 24px rgba(0,0,0,0.18);width:280px;max-width:calc(100vw - 32px);max-height:80vh;box-sizing:border-box;';
+    'display:none;flex-direction:column;margin-bottom:8px;background:#fff;padding:12px;border-radius:10px;border:1px solid #d0d7de;box-shadow:0 8px 24px rgba(0,0,0,0.18);width:300px;max-width:calc(100vw - 32px);max-height:82vh;box-sizing:border-box;';
 
   // Header inside Popup
   var hdr = document.createElement('div');
@@ -391,20 +532,20 @@
   var divider = document.createElement('div');
   divider.style.cssText =
     'font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:center;margin:2px 0 6px;letter-spacing:0.5px;border-top:1px solid #eee;padding-top:8px;';
-  divider.textContent = '— OR BROWSE CATEGORIES (MAX 2) —';
+  divider.textContent = '— OR BROWSE CATEGORIES (MAX 3) —';
   panel.appendChild(divider);
 
   // Section 2 (Bottom): Scrollable Category List
   var list = document.createElement('div');
   list.style.cssText =
-    'overflow-y:auto;flex:1;max-height:34vh;padding-right:2px;display:flex;flex-direction:column;gap:3px;margin:2px 0 6px;-webkit-overflow-scrolling:touch;';
+    'overflow-y:auto;flex:1;max-height:38vh;padding-right:3px;display:flex;flex-direction:column;gap:5px;margin:2px 0 6px;-webkit-overflow-scrolling:touch;';
   panel.appendChild(list);
 
   // Fetch Category Action Button
   var fetchCatBtn = document.createElement('button');
   fetchCatBtn.style.cssText =
     'display:block;width:100%;padding:9px;background:#ffd814;border:1px solid #fcd200;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;cursor:not-allowed;text-align:center;box-sizing:border-box;opacity:0.5;touch-action:manipulation;';
-  fetchCatBtn.textContent = 'Select 1 or 2 categories';
+  fetchCatBtn.textContent = 'Select up to 3 subcategories';
   fetchCatBtn.disabled = true;
   panel.appendChild(fetchCatBtn);
 
@@ -424,7 +565,8 @@
   var kwInput = searchSec.querySelector('#__aznowKwInput');
   var kwBtn = searchSec.querySelector('#__aznowKwBtn');
   var selectedCategories = [];
-  var categoryButtons = [];
+  var categoryHeaders = [];
+  var subcategoryButtons = [];
 
   // Dynamic state updater for Keyword Search Button
   function updateSearchUI() {
@@ -446,9 +588,9 @@
   kwInput.addEventListener('input', updateSearchUI);
   updateSearchUI(); // Initialize based on pre-detected query
 
-  // Dynamic state updater for Category UI
+  // Dynamic state updater for Subcategory and Category UI
   function updateCategoryUI() {
-    categoryButtons.forEach(function (btn) {
+    subcategoryButtons.forEach(function (btn) {
       var isSelected = selectedCategories.some(function (item) {
         return item.nodeId === btn.__nodeId;
       });
@@ -459,7 +601,7 @@
         btn.style.fontWeight = '700';
         btn.querySelector('.chk').textContent = '✓';
       } else {
-        btn.style.background = '#f8f9fa';
+        btn.style.background = '#fff';
         btn.style.borderColor = '#e2e8f0';
         btn.style.color = '#333';
         btn.style.fontWeight = '400';
@@ -467,59 +609,120 @@
       }
     });
 
+    categoryHeaders.forEach(function (hdrBtn) {
+      var group = hdrBtn.__catGroup;
+      var selectedInGroup = selectedCategories.filter(function (it) {
+        return it.parentCat === group.name;
+      }).length;
+      if (selectedInGroup > 0) {
+        hdrBtn.__countBadge.style.display = 'inline-block';
+        hdrBtn.__countBadge.textContent = selectedInGroup;
+        hdrBtn.style.color = '#1a73e8';
+      } else {
+        hdrBtn.__countBadge.style.display = 'none';
+        hdrBtn.style.color = '#222';
+      }
+    });
+
     if (selectedCategories.length === 0) {
       fetchCatBtn.disabled = true;
       fetchCatBtn.style.opacity = '0.5';
       fetchCatBtn.style.cursor = 'not-allowed';
-      fetchCatBtn.textContent = 'Select 1 or 2 categories';
+      fetchCatBtn.textContent = 'Select up to 3 subcategories';
     } else {
       fetchCatBtn.disabled = false;
       fetchCatBtn.style.opacity = '1';
       fetchCatBtn.style.cursor = 'pointer';
-      fetchCatBtn.textContent = 'Fetch Deals (' + selectedCategories.length + ' selected)';
+      fetchCatBtn.textContent =
+        'Fetch Deals (' +
+        selectedCategories.length +
+        ' subcategor' +
+        (selectedCategories.length === 1 ? 'y' : 'ies') +
+        ')';
     }
   }
 
-  // Populate UI with Categories
-  categoryGroups.forEach(function (group) {
-    var groupHeader = document.createElement('div');
-    groupHeader.textContent = group[0];
-    groupHeader.style.cssText =
-      'font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin:5px 2px 2px;letter-spacing:0.3px;';
-    list.appendChild(groupHeader);
+  // Populate UI with Categories & Subcategories
+  categoriesData.forEach(function (catGroup) {
+    var catCard = document.createElement('div');
+    catCard.style.cssText =
+      'display:flex;flex-direction:column;border:1px solid #e2e8f0;border-radius:7px;overflow:hidden;background:#fff;';
 
-    group[1].forEach(function (cat) {
-      var catName = cat[0];
-      var catNode = cat[1];
+    var catHeader = document.createElement('button');
+    catHeader.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border:none;border-bottom:1px solid transparent;cursor:pointer;font-size:12px;font-weight:700;color:#222;text-align:left;user-select:none;touch-action:manipulation;width:100%;';
+
+    var titleSpan = document.createElement('span');
+    titleSpan.textContent = catGroup.name;
+
+    var rightArea = document.createElement('div');
+    rightArea.style.cssText = 'display:flex;align-items:center;gap:6px;';
+
+    var countBadge = document.createElement('span');
+    countBadge.style.cssText =
+      'display:none;background:#1a73e8;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.3;';
+
+    var arrowSpan = document.createElement('span');
+    arrowSpan.style.cssText = 'color:#888;font-size:11px;';
+    arrowSpan.textContent = '▸';
+
+    rightArea.appendChild(countBadge);
+    rightArea.appendChild(arrowSpan);
+    catHeader.appendChild(titleSpan);
+    catHeader.appendChild(rightArea);
+
+    var subsContainer = document.createElement('div');
+    subsContainer.style.cssText =
+      'display:none;flex-direction:column;gap:3px;padding:6px 8px;background:#fff;border-top:1px solid #eee;max-height:220px;overflow-y:auto;';
+
+    catHeader.onclick = function () {
+      var isOpen = subsContainer.style.display === 'flex';
+      subsContainer.style.display = isOpen ? 'none' : 'flex';
+      arrowSpan.textContent = isOpen ? '▸' : '▾';
+      catHeader.style.borderBottomColor = isOpen ? 'transparent' : '#eee';
+    };
+
+    catHeader.__catGroup = catGroup;
+    catHeader.__countBadge = countBadge;
+    categoryHeaders.push(catHeader);
+
+    catGroup.subs.forEach(function (sub) {
+      var subName = sub[0];
+      var subNode = sub[1];
       var btn = document.createElement('button');
-      btn.__nodeId = catNode;
-      btn.__catName = catName;
+      btn.__nodeId = subNode;
+      btn.__catName = subName;
+      btn.__parentCat = catGroup.name;
       btn.style.cssText =
-        'display:flex;align-items:center;justify-content:space-between;padding:7px 9px;min-height:32px;border:1px solid #e2e8f0;border-radius:6px;background:#f8f9fa;text-align:left;font-size:12px;cursor:pointer;user-select:none;color:#333;touch-action:manipulation;';
+        'display:flex;align-items:center;justify-content:space-between;padding:6px 8px;min-height:28px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;text-align:left;font-size:11.5px;cursor:pointer;user-select:none;color:#333;touch-action:manipulation;';
       btn.innerHTML =
         '<span>' +
-        catName +
+        subName +
         '</span><span class="chk" style="color:#1a73e8;font-weight:bold;margin-left:4px"></span>';
 
       btn.onclick = function () {
         var idx = selectedCategories.findIndex(function (item) {
-          return item.nodeId === catNode;
+          return item.nodeId === subNode;
         });
         if (idx >= 0) {
           selectedCategories.splice(idx, 1);
         } else {
-          if (selectedCategories.length >= 2) {
-            alert('Maximum 2 categories allowed per fetch.');
+          if (selectedCategories.length >= 3) {
+            alert('Maximum 3 subcategories allowed per fetch.');
             return;
           }
-          selectedCategories.push({ name: catName, nodeId: catNode, btn: btn });
+          selectedCategories.push({ name: subName, nodeId: subNode, parentCat: catGroup.name });
         }
         updateCategoryUI();
       };
 
-      categoryButtons.push(btn);
-      list.appendChild(btn);
+      subcategoryButtons.push(btn);
+      subsContainer.appendChild(btn);
     });
+
+    catCard.appendChild(catHeader);
+    catCard.appendChild(subsContainer);
+    list.appendChild(catCard);
   });
 
   function setAllControlsDisabled(disabled) {
@@ -530,9 +733,12 @@
     fetchCatBtn.disabled = disabled;
     fetchCatBtn.style.opacity = disabled ? '0.7' : (selectedCategories.length ? '1' : '0.5');
     fetchCatBtn.style.cursor = disabled ? 'wait' : (selectedCategories.length ? 'pointer' : 'not-allowed');
-    categoryButtons.forEach(function (btn) {
+    subcategoryButtons.forEach(function (btn) {
       btn.disabled = disabled;
       btn.style.opacity = disabled ? '0.5' : '1';
+    });
+    categoryHeaders.forEach(function (hdr) {
+      hdr.disabled = disabled;
     });
   }
 
