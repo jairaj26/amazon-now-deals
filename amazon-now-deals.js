@@ -71,6 +71,7 @@
   // Pre-configured hierarchical categories and subcategories
   var categoriesData = [
     {
+      icon: '🌾',
       name: 'Grocery & Staples',
       subs: [
         ['Atta & Flours', '204870009031'],
@@ -87,6 +88,7 @@
       ]
     },
     {
+      icon: '🥛',
       name: 'Dairy, Bread & Eggs',
       subs: [
         ['Fresh Milk', '204870018031'],
@@ -100,6 +102,7 @@
       ]
     },
     {
+      icon: '🍿',
       name: 'Snacks, Sweets & Treats',
       subs: [
         ['Chocolates', '204924526031'],
@@ -122,6 +125,7 @@
       ]
     },
     {
+      icon: '🥤',
       name: 'Beverages & Drinks',
       subs: [
         ['Cold Drinks & Sodas', '204924556031'],
@@ -135,6 +139,7 @@
       ]
     },
     {
+      icon: '🍦',
       name: 'Ice Creams & Frozen',
       subs: [
         ['Gourmet Ice Cream Tubs', '216450650031'],
@@ -145,6 +150,7 @@
       ]
     },
     {
+      icon: '🧴',
       name: 'Personal Care & Beauty',
       subs: [
         ['Facial Cleansers & Face Wash', '204992615031'],
@@ -162,6 +168,7 @@
       ]
     },
     {
+      icon: '🪥',
       name: 'Oral Care & Health',
       subs: [
         ['Toothpaste', '205015906031'],
@@ -177,6 +184,7 @@
       ]
     },
     {
+      icon: '🧹',
       name: 'Home Care & Cleaning',
       subs: [
         ['Liquid Detergent (Matic)', '204952379031'],
@@ -198,6 +206,7 @@
       ]
     },
     {
+      icon: '🍳',
       name: 'Kitchen & Home',
       subs: [
         ['Pressure Cookers', '206264740031'],
@@ -209,6 +218,7 @@
       ]
     },
     {
+      icon: '🥦',
       name: 'Fresh Produce & Meat',
       subs: [
         ['Fresh Vegetables', '218833871031'],
@@ -217,12 +227,14 @@
       ]
     },
     {
+      icon: '👶',
       name: 'Baby Care',
       subs: [
         ['Diapers & Baby Care', '211421666031']
       ]
     },
     {
+      icon: '🌿',
       name: 'Paan Corner',
       subs: [
         ['Rolling Papers & Lighters', '219564338031']
@@ -507,53 +519,70 @@
   // Popup Menu Panel
   var panel = document.createElement('div');
   panel.style.cssText =
-    'display:none;flex-direction:column;margin-bottom:8px;background:#fff;padding:12px;border-radius:10px;border:1px solid #d0d7de;box-shadow:0 8px 24px rgba(0,0,0,0.18);width:300px;max-width:calc(100vw - 32px);max-height:82vh;box-sizing:border-box;';
+    'display:flex;flex-direction:column;margin-bottom:10px;background:#ffffff;padding:14px;border-radius:12px;border:1px solid #d0d7de;box-shadow:0 12px 32px rgba(0,0,0,0.18),0 2px 6px rgba(0,0,0,0.08);width:350px;max-width:calc(100vw - 28px);height:84vh;max-height:680px;min-height:480px;box-sizing:border-box;';
 
   // Header inside Popup
   var hdr = document.createElement('div');
   hdr.style.cssText =
-    'display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:8px;';
+    'display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:10px;';
   hdr.innerHTML =
-    '<div style="font-weight:700;font-size:13px;color:#111">Amazon Now Deals</div><div id="__aznowClose" style="cursor:pointer;font-size:16px;color:#888;padding:0 6px;line-height:1">✕</div>';
+    '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">⚡</span><span style="font-weight:700;font-size:14px;color:#0f1111;">Amazon Now Deals</span></div><div id="__aznowClose" style="cursor:pointer;font-size:18px;color:#64748b;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .15s;">✕</div>';
   panel.appendChild(hdr);
 
   // Section 1 (Top): Keyword Search
   var searchSec = document.createElement('div');
   searchSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
   searchSec.innerHTML =
-    '<div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.3px;">Search Any Product</div>' +
-    '<input type="text" id="__aznowKwInput" placeholder="Type item (e.g. sweets, milk)..." value="' +
-    initialKeyword.replace(/"/g, '&quot;') +
-    '" style="width:100%;padding:8px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:12px;outline:none;box-sizing:border-box;font-family:inherit;">' +
-    '<button id="__aznowKwBtn" style="width:100%;padding:8px;background:#ffd814;border:1px solid #fcd200;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;cursor:not-allowed;text-align:center;box-sizing:border-box;touch-action:manipulation;opacity:0.5;">Search Deals</button>';
+    '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Search Any Product</div>' +
+    '<div style="display:flex;gap:6px;">' +
+      '<input type="text" id="__aznowKwInput" placeholder="e.g. sweets, milk, atta..." value="' +
+      initialKeyword.replace(/"/g, '&quot;') +
+      '" style="flex:1;min-width:0;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;outline:none;box-sizing:border-box;font-family:inherit;background:#f8fafc;transition:border-color .15s,background .15s;">' +
+      '<button id="__aznowKwBtn" style="padding:8px 14px;background:#ffd814;border:1px solid #fcd200;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;cursor:not-allowed;text-align:center;box-sizing:border-box;touch-action:manipulation;opacity:0.5;white-space:nowrap;">Search</button>' +
+    '</div>';
   panel.appendChild(searchSec);
 
   // Section Divider
   var divider = document.createElement('div');
   divider.style.cssText =
-    'font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:center;margin:2px 0 6px;letter-spacing:0.5px;border-top:1px solid #eee;padding-top:8px;';
-  divider.textContent = '— OR BROWSE CATEGORIES (MAX 3) —';
+    'display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px;border-top:1px solid #e2e8f0;margin-top:2px;';
+  divider.innerHTML =
+    '<span style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Browse Categories</span>' +
+    '<span style="font-size:10.5px;font-weight:600;color:#64748b;">Max 3 subcategories</span>';
   panel.appendChild(divider);
 
-  // Section 2 (Bottom): Scrollable Category List
+  // Section 2 (Middle): Scrollable Category List
   var list = document.createElement('div');
   list.style.cssText =
-    'overflow-y:auto;flex:1;max-height:38vh;padding-right:3px;display:flex;flex-direction:column;gap:5px;margin:2px 0 6px;-webkit-overflow-scrolling:touch;';
+    'overflow-y:auto;flex:1;min-height:0;padding-right:4px;display:flex;flex-direction:column;gap:6px;margin:0 0 10px;-webkit-overflow-scrolling:touch;';
   panel.appendChild(list);
 
-  // Fetch Category Action Button
+  // Section 3 (Bottom): Footer Action Area
+  var footerSec = document.createElement('div');
+  footerSec.style.cssText =
+    'display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid #e2e8f0;background:#fff;';
+
+  var statusRow = document.createElement('div');
+  statusRow.style.cssText =
+    'display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:#64748b;';
+  statusRow.innerHTML =
+    '<span>Selected: <strong id="__aznowSelCount" style="color:#0f1111;">0 / 3</strong></span>' +
+    '<span id="__aznowClearBtn" style="color:#ef4444;cursor:pointer;font-weight:600;display:none;">Clear All</span>';
+  footerSec.appendChild(statusRow);
+
   var fetchCatBtn = document.createElement('button');
   fetchCatBtn.style.cssText =
-    'display:block;width:100%;padding:9px;background:#ffd814;border:1px solid #fcd200;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;cursor:not-allowed;text-align:center;box-sizing:border-box;opacity:0.5;touch-action:manipulation;';
+    'display:block;width:100%;padding:10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:12.5px;font-weight:700;color:#94a3b8;cursor:not-allowed;text-align:center;box-sizing:border-box;touch-action:manipulation;transition:all .15s ease;';
   fetchCatBtn.textContent = 'Select up to 3 subcategories';
   fetchCatBtn.disabled = true;
-  panel.appendChild(fetchCatBtn);
+  footerSec.appendChild(fetchCatBtn);
+  panel.appendChild(footerSec);
 
   // Main Floating Button (FAB)
   var fab = document.createElement('button');
-  fab.textContent = 'Deals';
+  fab.innerHTML = '<span style="margin-right:4px;">⚡</span>Deals';
   fab.style.cssText =
-    'background:#febd69;border:1px solid #f2a740;border-radius:20px;padding:12px 18px;font-size:14px;font-weight:700;color:#0f1111;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,0.15);float:right;touch-action:manipulation;';
+    'background:#ffd814;border:1px solid #fcd200;border-radius:24px;padding:12px 20px;font-size:14px;font-weight:700;color:#0f1111;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.18);float:right;touch-action:manipulation;';
   fab.onclick = function () {
     panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'flex' : 'none';
   };
@@ -564,9 +593,21 @@
 
   var kwInput = searchSec.querySelector('#__aznowKwInput');
   var kwBtn = searchSec.querySelector('#__aznowKwBtn');
+  var clearBtn = statusRow.querySelector('#__aznowClearBtn');
+  var selCount = statusRow.querySelector('#__aznowSelCount');
+
   var selectedCategories = [];
-  var categoryHeaders = [];
+  var categoryCards = [];
   var subcategoryButtons = [];
+
+  kwInput.onfocus = function () {
+    kwInput.style.background = '#fff';
+    kwInput.style.borderColor = '#1a73e8';
+  };
+  kwInput.onblur = function () {
+    kwInput.style.background = '#f8fafc';
+    kwInput.style.borderColor = '#cbd5e1';
+  };
 
   // Dynamic state updater for Keyword Search Button
   function updateSearchUI() {
@@ -575,18 +616,18 @@
       kwBtn.disabled = false;
       kwBtn.style.opacity = '1';
       kwBtn.style.cursor = 'pointer';
-      var preview = val.length > 14 ? val.slice(0, 14) + '...' : val;
-      kwBtn.textContent = '🔍 Search Deals for "' + preview + '"';
+      var preview = val.length > 12 ? val.slice(0, 12) + '...' : val;
+      kwBtn.textContent = 'Search "' + preview + '"';
     } else {
       kwBtn.disabled = true;
       kwBtn.style.opacity = '0.5';
       kwBtn.style.cursor = 'not-allowed';
-      kwBtn.textContent = 'Search Deals';
+      kwBtn.textContent = 'Search';
     }
   }
 
   kwInput.addEventListener('input', updateSearchUI);
-  updateSearchUI(); // Initialize based on pre-detected query
+  updateSearchUI();
 
   // Dynamic state updater for Subcategory and Category UI
   function updateCategoryUI() {
@@ -595,75 +636,97 @@
         return item.nodeId === btn.__nodeId;
       });
       if (isSelected) {
-        btn.style.background = '#e8f0fe';
-        btn.style.borderColor = '#1a73e8';
-        btn.style.color = '#1a73e8';
-        btn.style.fontWeight = '700';
-        btn.querySelector('.chk').textContent = '✓';
+        btn.style.background = '#eff6ff';
+        btn.style.borderColor = '#3b82f6';
+        btn.style.color = '#1d4ed8';
+        btn.style.fontWeight = '600';
+        btn.querySelector('.chk').innerHTML =
+          '<span style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:4px;background:#2563eb;color:#fff;font-size:10.5px;font-weight:700;">✓</span>';
       } else {
-        btn.style.background = '#fff';
+        btn.style.background = '#ffffff';
         btn.style.borderColor = '#e2e8f0';
-        btn.style.color = '#333';
+        btn.style.color = '#334155';
         btn.style.fontWeight = '400';
-        btn.querySelector('.chk').textContent = '';
+        btn.querySelector('.chk').innerHTML =
+          '<span style="display:inline-block;width:15px;height:15px;border-radius:4px;border:1.5px solid #cbd5e1;background:#fff;box-sizing:border-box;"></span>';
       }
     });
 
-    categoryHeaders.forEach(function (hdrBtn) {
-      var group = hdrBtn.__catGroup;
+    categoryCards.forEach(function (cardObj) {
+      var group = cardObj.catGroup;
       var selectedInGroup = selectedCategories.filter(function (it) {
         return it.parentCat === group.name;
       }).length;
       if (selectedInGroup > 0) {
-        hdrBtn.__countBadge.style.display = 'inline-block';
-        hdrBtn.__countBadge.textContent = selectedInGroup;
-        hdrBtn.style.color = '#1a73e8';
+        cardObj.countBadge.style.display = 'inline-block';
+        cardObj.countBadge.textContent = selectedInGroup;
+        cardObj.header.style.color = '#1d4ed8';
       } else {
-        hdrBtn.__countBadge.style.display = 'none';
-        hdrBtn.style.color = '#222';
+        cardObj.countBadge.style.display = 'none';
+        cardObj.header.style.color = '#1e293b';
       }
     });
 
+    selCount.textContent = selectedCategories.length + ' / 3';
+    clearBtn.style.display = selectedCategories.length > 0 ? 'inline' : 'none';
+
     if (selectedCategories.length === 0) {
       fetchCatBtn.disabled = true;
-      fetchCatBtn.style.opacity = '0.5';
+      fetchCatBtn.style.background = '#f1f5f9';
+      fetchCatBtn.style.borderColor = '#e2e8f0';
+      fetchCatBtn.style.color = '#94a3b8';
       fetchCatBtn.style.cursor = 'not-allowed';
+      fetchCatBtn.style.boxShadow = 'none';
       fetchCatBtn.textContent = 'Select up to 3 subcategories';
     } else {
       fetchCatBtn.disabled = false;
-      fetchCatBtn.style.opacity = '1';
+      fetchCatBtn.style.background = '#ffd814';
+      fetchCatBtn.style.borderColor = '#fcd200';
+      fetchCatBtn.style.color = '#0f1111';
       fetchCatBtn.style.cursor = 'pointer';
+      fetchCatBtn.style.boxShadow = '0 2px 6px rgba(252,210,0,0.35)';
       fetchCatBtn.textContent =
         'Fetch Deals (' +
         selectedCategories.length +
         ' subcategor' +
         (selectedCategories.length === 1 ? 'y' : 'ies') +
-        ')';
+        ') →';
     }
   }
+
+  clearBtn.onclick = function () {
+    selectedCategories = [];
+    updateCategoryUI();
+  };
 
   // Populate UI with Categories & Subcategories
   categoriesData.forEach(function (catGroup) {
     var catCard = document.createElement('div');
     catCard.style.cssText =
-      'display:flex;flex-direction:column;border:1px solid #e2e8f0;border-radius:7px;overflow:hidden;background:#fff;';
+      'display:flex;flex-direction:column;border:1px solid #e2e8f0;border-radius:8px;background:#fff;transition:border-color .15s;box-sizing:border-box;';
 
     var catHeader = document.createElement('button');
     catHeader.style.cssText =
-      'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border:none;border-bottom:1px solid transparent;cursor:pointer;font-size:12px;font-weight:700;color:#222;text-align:left;user-select:none;touch-action:manipulation;width:100%;';
+      'display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8fafc;border:none;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;color:#1e293b;text-align:left;user-select:none;touch-action:manipulation;width:100%;box-sizing:border-box;transition:background .15s;';
 
     var titleSpan = document.createElement('span');
-    titleSpan.textContent = catGroup.name;
+    titleSpan.style.cssText = 'display:flex;align-items:center;gap:6px;';
+    titleSpan.innerHTML =
+      '<span style="font-size:14px;">' +
+      (catGroup.icon || '📦') +
+      '</span><span>' +
+      catGroup.name +
+      '</span>';
 
     var rightArea = document.createElement('div');
     rightArea.style.cssText = 'display:flex;align-items:center;gap:6px;';
 
     var countBadge = document.createElement('span');
     countBadge.style.cssText =
-      'display:none;background:#1a73e8;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.3;';
+      'display:none;background:#2563eb;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;line-height:1.3;';
 
     var arrowSpan = document.createElement('span');
-    arrowSpan.style.cssText = 'color:#888;font-size:11px;';
+    arrowSpan.style.cssText = 'color:#94a3b8;font-size:11px;font-weight:700;';
     arrowSpan.textContent = '▸';
 
     rightArea.appendChild(countBadge);
@@ -673,18 +736,41 @@
 
     var subsContainer = document.createElement('div');
     subsContainer.style.cssText =
-      'display:none;flex-direction:column;gap:3px;padding:6px 8px;background:#fff;border-top:1px solid #eee;max-height:220px;overflow-y:auto;';
+      'display:none;flex-direction:column;gap:4px;padding:8px 10px 10px;background:#fcfcfd;border-top:1px solid #f1f5f9;border-bottom-left-radius:7px;border-bottom-right-radius:7px;box-sizing:border-box;';
+
+    var cardObj = {
+      card: catCard,
+      header: catHeader,
+      container: subsContainer,
+      arrow: arrowSpan,
+      countBadge: countBadge,
+      catGroup: catGroup
+    };
+    categoryCards.push(cardObj);
 
     catHeader.onclick = function () {
       var isOpen = subsContainer.style.display === 'flex';
-      subsContainer.style.display = isOpen ? 'none' : 'flex';
-      arrowSpan.textContent = isOpen ? '▸' : '▾';
-      catHeader.style.borderBottomColor = isOpen ? 'transparent' : '#eee';
+      if (isOpen) {
+        subsContainer.style.display = 'none';
+        arrowSpan.textContent = '▸';
+        catHeader.style.borderRadius = '7px';
+        catCard.style.borderColor = '#e2e8f0';
+      } else {
+        categoryCards.forEach(function (other) {
+          other.container.style.display = 'none';
+          other.arrow.textContent = '▸';
+          other.header.style.borderRadius = '7px';
+          other.card.style.borderColor = '#e2e8f0';
+        });
+        subsContainer.style.display = 'flex';
+        arrowSpan.textContent = '▾';
+        catHeader.style.borderRadius = '7px 7px 0 0';
+        catCard.style.borderColor = '#93c5fd';
+        setTimeout(function () {
+          catCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
+      }
     };
-
-    catHeader.__catGroup = catGroup;
-    catHeader.__countBadge = countBadge;
-    categoryHeaders.push(catHeader);
 
     catGroup.subs.forEach(function (sub) {
       var subName = sub[0];
@@ -694,11 +780,11 @@
       btn.__catName = subName;
       btn.__parentCat = catGroup.name;
       btn.style.cssText =
-        'display:flex;align-items:center;justify-content:space-between;padding:6px 8px;min-height:28px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;text-align:left;font-size:11.5px;cursor:pointer;user-select:none;color:#333;touch-action:manipulation;';
+        'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#ffffff;text-align:left;font-size:12px;cursor:pointer;user-select:none;color:#334155;touch-action:manipulation;transition:all .12s ease;box-sizing:border-box;width:100%;';
       btn.innerHTML =
         '<span>' +
         subName +
-        '</span><span class="chk" style="color:#1a73e8;font-weight:bold;margin-left:4px"></span>';
+        '</span><span class="chk" style="margin-left:6px;flex-shrink:0;"></span>';
 
       btn.onclick = function () {
         var idx = selectedCategories.findIndex(function (item) {
@@ -733,12 +819,14 @@
     fetchCatBtn.disabled = disabled;
     fetchCatBtn.style.opacity = disabled ? '0.7' : (selectedCategories.length ? '1' : '0.5');
     fetchCatBtn.style.cursor = disabled ? 'wait' : (selectedCategories.length ? 'pointer' : 'not-allowed');
+    clearBtn.style.pointerEvents = disabled ? 'none' : 'auto';
+    clearBtn.style.opacity = disabled ? '0.5' : '1';
     subcategoryButtons.forEach(function (btn) {
       btn.disabled = disabled;
       btn.style.opacity = disabled ? '0.5' : '1';
     });
-    categoryHeaders.forEach(function (hdr) {
-      hdr.disabled = disabled;
+    categoryCards.forEach(function (cardObj) {
+      cardObj.header.disabled = disabled;
     });
   }
 
@@ -762,7 +850,7 @@
       var emptyBatches = 0;
 
       while (hasMore && page < 30) {
-        kwBtn.textContent = 'Searching "' + (kw.length > 10 ? kw.slice(0, 10) + '...' : kw) + '" (p.' + (page + 1) + ')... (' + items.length + ')';
+        kwBtn.textContent = 'p.' + (page + 1) + ' (' + items.length + ')';
 
         try {
           var res = await fetch(buildSearchUrl(kw, offset), {
