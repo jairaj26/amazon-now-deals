@@ -269,6 +269,113 @@
     );
   }
 
+  // Extract brand from product data and title
+  function extractBrand(title, y) {
+    var rawBrand =
+      (y && y.brand && (typeof y.brand === 'string' ? y.brand : (y.brand.name || y.brand.displayName || y.brand.text))) ||
+      (y && y.brandName) ||
+      (y && y.brandText) ||
+      (y && y.byLine) ||
+      (y && y.byline) ||
+      (y && y.brandOrManufacturer) ||
+      (y && y.manufacturer) ||
+      (y && y.productOverview && y.productOverview.brand) ||
+      (y && y.attributes && y.attributes.brand) ||
+      '';
+
+    if (typeof rawBrand === 'string' && rawBrand.trim()) {
+      return rawBrand.replace(/^(by|brand:)\s+/i, '').trim();
+    }
+
+    if (y && y.extraProductDetails && Array.isArray(y.extraProductDetails)) {
+      for (var i = 0; i < y.extraProductDetails.length; i++) {
+        var epd = y.extraProductDetails[i];
+        if (epd && (epd.id === 'manufacturer' || epd.id === 'brand') && typeof epd.value === 'string' && epd.value.trim()) {
+          return epd.value.trim();
+        }
+      }
+    }
+
+    if (!title || typeof title !== 'string') return '';
+    var t = title.trim();
+    var tl = t.toLowerCase();
+
+    var multiBrands = [
+      'cadbury dairy milk',
+      'surf excel',
+      'coca-cola',
+      'thums up',
+      'tata sampann',
+      'tata salt',
+      'tata tea',
+      'dairy milk',
+      'red label',
+      'mother dairy',
+      'paper boat',
+      'raw pressery',
+      'too yumm',
+      'real fruit',
+      'b natural',
+      'brooke bond',
+      'taj mahal',
+      'sleepy owl',
+      'blue tokai',
+      'the whole truth',
+      'whole truth',
+      'open secret',
+      'yoga bar',
+      'wingreens farms',
+      "ching's secret",
+      'chings secret',
+      'top ramen',
+      'wai wai',
+      '24 mantra',
+      'two brothers',
+      'organic india',
+      'forest essentials',
+      'kama ayurveda',
+      'the derma co',
+      "dr. sheth's",
+      'dr sheths',
+      'plum goodness',
+      'head & shoulders',
+      "l'oreal paris",
+      'loreal paris',
+      'godrej no.1',
+      'good knight',
+      'all out',
+      'muscleblaze',
+      'muscle blaze',
+      'optimum nutrition',
+      'fast&up',
+      'comfort after wash',
+      'clinic plus',
+      'country delight',
+      'milky mist',
+      'uncle chipps',
+      'red bull',
+      'mountain dew'
+    ];
+
+    for (var m = 0; m < multiBrands.length; m++) {
+      var mb = multiBrands[m];
+      if (tl.indexOf(mb) === 0) {
+        return t.slice(0, mb.length).trim();
+      }
+    }
+
+    var cleanTokens = t.split(/\s+/).filter(Boolean);
+    if (cleanTokens.length === 0) return '';
+
+    var first = cleanTokens[0];
+    if (/^\d+%?$/.test(first) && cleanTokens.length > 1) {
+      return first + ' ' + cleanTokens[1];
+    }
+
+    first = first.replace(/[,;:\-\.]*$/, '');
+    return first;
+  }
+
   // Parse product object
   function parseProduct(y, defaultCat) {
     if (!y || !y.asin) return null;
@@ -283,23 +390,7 @@
       (y.productImages && y.productImages[0] && (y.productImages[0].lowResImageUrl || y.productImages[0].highResImageUrl)) ||
       '';
 
-    var rawBrand =
-      (y.brand && (typeof y.brand === 'string' ? y.brand : (y.brand.name || y.brand.displayName || y.brand.text))) ||
-      y.brandName ||
-      y.brandText ||
-      y.byLine ||
-      y.byline ||
-      y.brandOrManufacturer ||
-      y.manufacturer ||
-      (y.productOverview && y.productOverview.brand) ||
-      (y.attributes && y.attributes.brand) ||
-      '';
-
-    if (typeof rawBrand === 'string') {
-      rawBrand = rawBrand.replace(/^(by|brand:)\s+/i, '').trim();
-    } else {
-      rawBrand = '';
-    }
+    var rawBrand = extractBrand(y.title, y);
 
     var categories = [];
     if (defaultCat && typeof defaultCat === 'string' && defaultCat.trim()) {
@@ -845,19 +936,48 @@
       var items = [];
       var offset = 0;
       var hasMore = true;
-      var page = 0;
       var rateLimitCount = 0;
-      var emptyBatches = 0;
+      var BATCH_SIZE = 2;
 
-      while (hasMore && page < 30) {
-        kwBtn.textContent = 'p.' + (page + 1) + ' (' + items.length + ')';
+      while (hasMore && offset < 30) {
+        var batchOffsets = [];
+        for (var b = 0; b < BATCH_SIZE && (offset + b) < 30; b++) {
+          batchOffsets.push(offset + b);
+        }
+        var pageLabels = batchOffsets
+          .map(function (o) {
+            return 'P' + (o + 1);
+          })
+          .join(', ');
+        kwBtn.textContent = pageLabels + ' (' + items.length + ')';
 
         try {
-          var res = await fetch(buildSearchUrl(kw, offset), {
-            credentials: 'include'
+          var promises = batchOffsets.map(function (curOffset) {
+            return fetch(buildSearchUrl(kw, curOffset), {
+              credentials: 'include'
+            })
+              .then(function (res) {
+                if (res.status === 429) {
+                  return { status: 429, offset: curOffset };
+                }
+                if (!res.ok) {
+                  return { status: res.status, error: 'HTTP ' + res.status, offset: curOffset };
+                }
+                return res.json().then(function (json) {
+                  return { status: 200, json: json, offset: curOffset };
+                });
+              })
+              .catch(function (err) {
+                return { error: err, offset: curOffset };
+              });
           });
 
-          if (res.status === 429) {
+          var results = await Promise.all(promises);
+
+          var has429 = results.some(function (r) {
+            return r && r.status === 429;
+          });
+          if (has429) {
             if (++rateLimitCount > 3) {
               hasMore = false;
               break;
@@ -865,38 +985,60 @@
             await sleep(4000 * rateLimitCount);
             continue;
           }
-
           rateLimitCount = 0;
-          var json = await res.json();
-          var data = json && json.data;
-          if (!data) break;
 
-          var searchResp = data.searchResponse || {};
-          var prods = searchResp.products || (data.widgets && data.widgets[0] && data.widgets[0].data && data.widgets[0].data.products) || [];
+          var batchHadItems = false;
+          var shouldStop = false;
 
-          if (prods.length === 0) {
-            emptyBatches++;
-            if (emptyBatches >= 3) {
-              hasMore = false;
+          for (var rIdx = 0; rIdx < results.length; rIdx++) {
+            var resObj = results[rIdx];
+            if (!resObj || resObj.error || !resObj.json || !resObj.json.data) {
+              shouldStop = true;
               break;
             }
-          } else {
-            emptyBatches = 0;
-          }
 
-          for (var p = 0; p < prods.length; p++) {
-            var prod = parseProduct(prods[p]);
-            if (prod && prod.a && !seenAsins[prod.a]) {
-              seenAsins[prod.a] = 1;
-              items.push(prod);
+            var data = resObj.json.data;
+            var searchResp = data.searchResponse || {};
+            var prods =
+              searchResp.products ||
+              (data.widgets && data.widgets[0] && data.widgets[0].data && data.widgets[0].data.products) ||
+              [];
+
+            if (prods.length === 0) {
+              shouldStop = true;
+              break;
+            }
+
+            batchHadItems = true;
+
+            for (var p = 0; p < prods.length; p++) {
+              var prod = parseProduct(prods[p]);
+              if (prod && prod.a && !seenAsins[prod.a]) {
+                seenAsins[prod.a] = 1;
+                items.push(prod);
+              }
+            }
+
+            var meta = searchResp.metadata || data.metadata || {};
+            var more =
+              meta.hasMoreResults !== undefined
+                ? !!meta.hasMoreResults
+                : meta.hasMoreWidgets !== undefined
+                ? !!meta.hasMoreWidgets
+                : true;
+            if (!more) {
+              shouldStop = true;
+              break;
             }
           }
 
-          var meta = searchResp.metadata || data.metadata || {};
-          hasMore = meta.hasMoreResults !== undefined ? !!meta.hasMoreResults : !!meta.hasMoreWidgets;
-          offset = typeof meta.nextOffset === 'number' ? meta.nextOffset : offset + 1;
-          page++;
-          await sleep(800);
+          if (shouldStop || !batchHadItems) {
+            hasMore = false;
+            break;
+          }
+
+          offset += batchOffsets.length;
+          await sleep(600);
         } catch (err) {
           hasMore = false;
         }
@@ -932,15 +1074,24 @@
         })
         .join(' & ');
 
+      var BATCH_SIZE = 2;
+
       for (var cIdx = 0; cIdx < selectedCategories.length; cIdx++) {
         var curCat = selectedCategories[cIdx];
         var offset = 0;
         var hasMore = true;
-        var page = 0;
         var rateLimitCount = 0;
-        var emptyBatches = 0;
 
-        while (hasMore && page < 30) {
+        while (hasMore && offset < 30) {
+          var batchOffsets = [];
+          for (var b = 0; b < BATCH_SIZE && (offset + b) < 30; b++) {
+            batchOffsets.push(offset + b);
+          }
+          var pageLabels = batchOffsets
+            .map(function (o) {
+              return 'P' + (o + 1);
+            })
+            .join(', ');
           fetchCatBtn.textContent =
             '(' +
             (cIdx + 1) +
@@ -948,18 +1099,39 @@
             selectedCategories.length +
             ') ' +
             curCat.name +
-            ' p.' +
-            (page + 1) +
+            ' ' +
+            pageLabels +
             ' (' +
             items.length +
             ')';
 
           try {
-            var res = await fetch(buildCategoryUrl(curCat.nodeId, offset), {
-              credentials: 'include'
+            var promises = batchOffsets.map(function (curOffset) {
+              return fetch(buildCategoryUrl(curCat.nodeId, curOffset), {
+                credentials: 'include'
+              })
+                .then(function (res) {
+                  if (res.status === 429) {
+                    return { status: 429, offset: curOffset };
+                  }
+                  if (!res.ok) {
+                    return { status: res.status, error: 'HTTP ' + res.status, offset: curOffset };
+                  }
+                  return res.json().then(function (json) {
+                    return { status: 200, json: json, offset: curOffset };
+                  });
+                })
+                .catch(function (err) {
+                  return { error: err, offset: curOffset };
+                });
             });
 
-            if (res.status === 429) {
+            var results = await Promise.all(promises);
+
+            var has429 = results.some(function (r) {
+              return r && r.status === 429;
+            });
+            if (has429) {
               if (++rateLimitCount > 3) {
                 hasMore = false;
                 break;
@@ -967,46 +1139,64 @@
               await sleep(4000 * rateLimitCount);
               continue;
             }
-
             rateLimitCount = 0;
-            var json = await res.json();
-            var data = json && json.data;
-            if (!data) break;
 
-            var widgets = data.widgets || [];
-            var batchCount = 0;
+            var batchHadItems = false;
+            var shouldStop = false;
 
-            for (var w = 0; w < widgets.length; w++) {
-              var prods = (widgets[w].data && widgets[w].data.products) || [];
-              batchCount += prods.length;
+            for (var rIdx = 0; rIdx < results.length; rIdx++) {
+              var resObj = results[rIdx];
+              if (!resObj || resObj.error || !resObj.json || !resObj.json.data) {
+                shouldStop = true;
+                break;
+              }
 
-              for (var p = 0; p < prods.length; p++) {
-                var prod = parseProduct(prods[p], curCat.name);
-                if (prod && prod.a) {
-                  if (!seenAsins[prod.a]) {
-                    seenAsins[prod.a] = prod;
-                    items.push(prod);
-                  } else {
-                    var existing = seenAsins[prod.a];
-                    if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
-                      existing.c.push(curCat.name);
+              var data = resObj.json.data;
+              var widgets = data.widgets || [];
+              var pageCount = 0;
+
+              for (var w = 0; w < widgets.length; w++) {
+                var prods = (widgets[w].data && widgets[w].data.products) || [];
+                pageCount += prods.length;
+
+                for (var p = 0; p < prods.length; p++) {
+                  var prod = parseProduct(prods[p], curCat.name);
+                  if (prod && prod.a) {
+                    if (!seenAsins[prod.a]) {
+                      seenAsins[prod.a] = prod;
+                      items.push(prod);
+                    } else {
+                      var existing = seenAsins[prod.a];
+                      if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
+                        existing.c.push(curCat.name);
+                      }
                     }
                   }
                 }
               }
+
+              if (pageCount === 0) {
+                shouldStop = true;
+                break;
+              }
+
+              batchHadItems = true;
+
+              var meta = data.metadata || {};
+              var more = meta.hasMoreWidgets !== undefined ? !!meta.hasMoreWidgets : true;
+              if (!more) {
+                shouldStop = true;
+                break;
+              }
             }
 
-            emptyBatches = batchCount === 0 ? emptyBatches + 1 : 0;
-            if (emptyBatches >= 6) {
+            if (shouldStop || !batchHadItems) {
               hasMore = false;
               break;
             }
 
-            var meta = data.metadata || {};
-            hasMore = !!meta.hasMoreWidgets;
-            offset = typeof meta.nextOffset === 'number' ? meta.nextOffset : offset + 1;
-            page++;
-            await sleep(800);
+            offset += batchOffsets.length;
+            await sleep(600);
           } catch (err) {
             hasMore = false;
           }
