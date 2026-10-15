@@ -32,6 +32,8 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 # Amazon Now Session & Store Configuration
+# Note: AMAZON_COOKIE contains the session and delivery location/pincode tokens.
+# AMAZON_BRAND_ID is optional since /s?i=amazontez resolves the dark store from AMAZON_COOKIE.
 AMAZON_COOKIE = os.getenv("AMAZON_COOKIE", "").strip()
 AMAZON_BRAND_ID = os.getenv("AMAZON_BRAND_ID", "").strip()
 
@@ -42,43 +44,48 @@ INTER_PAGE_DELAY = float(os.getenv("INTER_PAGE_DELAY", "0.8"))
 CACHE_FILE = os.getenv("CACHE_FILE", os.path.join("data", "posted_deals.json"))
 DRY_RUN = os.getenv("DRY_RUN", "false").lower() in ("true", "1", "yes")
 
+# Specialized Retail Store node for Amazon Now (Tez)
+TEZ_SRS_NODE = "100147972031"
+
+# Amazon India Global Search Discount Refinement Node Map (rnid: 2665398031)
+DISCOUNT_NODE_MAP = {
+    10: "2665399031",
+    25: "2665400031",
+    35: "2665402031",
+    50: "2665401031",
+    60: "27060456031",
+    70: "27060457031"
+}
+
+# Maximum global search pages to fetch per run
+MAX_GLOBAL_PAGES = int(os.getenv("MAX_GLOBAL_PAGES", "15"))
+
 # HTTP & API Headers
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+# Modern Android Mobile User-Agent allows Amazon to return the mobile list view containing
+# data-csa-c-price-to-pay and data-csa-c-strike-through-price attributes.
+USER_AGENT = os.getenv(
+    "USER_AGENT",
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+)
 
 DEFAULT_HEADERS = {
-    "accept": "application/json, text/plain, */*",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "accept-language": "en-US,en;q=0.9",
     "user-agent": USER_AGENT,
     "origin": "https://www.amazon.in",
     "referer": "https://www.amazon.in/tez/browse/home"
 }
 
-# Optional browse node for Skin Care (set via env var or replace here once discovered)
-SKIN_CARE_NODE_ID = os.getenv("SKIN_CARE_NODE_ID", "").strip()
-
-# Target High-Yield Categories on Amazon Now
+# Backward compatibility category list (if category-specific scan is invoked)
 CATEGORIES = [
-    # Personal Care (Frequently 50% - 70%+ deals)
     {"name": "Bath & Body", "nodeId": "204992653031", "endpoint": "category"},
     {"name": "Hair Care", "nodeId": "204992645031", "endpoint": "category"},
     {"name": "Oral Care", "nodeId": "205015906031", "endpoint": "category"},
-
-    # Home Care & Cleaning
     {"name": "Cleaners & Repellents", "nodeId": "204952388031", "endpoint": "category"},
     {"name": "Detergent & Laundry", "nodeId": "204952381031", "endpoint": "category"},
-
-    # Snacks & Beverages
     {"name": "Chips & Namkeen", "nodeId": "215540425031", "endpoint": "category"},
     {"name": "Beverages & Drinks", "nodeId": "204924538031", "endpoint": "category"},
     {"name": "Tea & Coffee", "nodeId": "204924535031", "endpoint": "category"},
-
-    # Health & Baby Care
     {"name": "Baby Care", "nodeId": "211421666031", "endpoint": "category"},
-
-    # Staples
-    {"name": "Atta, Dal & Rice", "nodeId": "204870002031", "endpoint": "category"},
+    {"name": "Atta, Dal & Rice", "nodeId": "204870002031", "endpoint": "category"}
 ]
-
-# Dynamically include Skin Care if node ID is configured
-if SKIN_CARE_NODE_ID:
-    CATEGORIES.insert(2, {"name": "Skin Care", "nodeId": SKIN_CARE_NODE_ID, "endpoint": "category"})

@@ -1,18 +1,14 @@
 /**
- * Amazon Now Deals Explorer
- * 
- * A bookmarklet script that injects a floating deals menu on Amazon Now (Tez) pages,
- * allowing users to fetch and view deals sorted by highest discount percentage.
- * 
+ * Amazon Now Deals Explorer (v2 - Hybrid /s Global Filter + Tez Category & Keyword API)
+ *
  * Features:
- * - Keyword Search API fetcher: Search any keyword (e.g. "sweets", "ice cream") and fetch all pages without DOM scrolling
- * - Multi-Category Selection: Select up to 2 categories per fetch
- * - Live keyword search / filter in the new tab
- * - Sort options: Discount (High to Low), Price (Low to High), Price (High to Low)
- * - Deduplicates products across categories / search pages by ASIN
- * - Displays deals in a responsive product card grid (5 columns desktop / 3 columns mobile)
- * - Highlights discount percentage badges clearly
- * - Clickable product cards opening straight to Amazon product pages
+ * - Global Deals Fetcher: Fetches all items across Amazon Now using server-side discount filters (/s?i=amazontez&srs=100147972031)
+ * - Sidebar Discount Pills: 10%, 25%, 35%, 50%, 60%, 70% off (Defaults to 60% off)
+ * - Keyword Search API fetcher: Search any keyword via Tez JSON API and filter by chosen discount
+ * - Multi-Category Selection: Select up to 3 subcategories per fetch
+ * - Zero hardcoded location/headers: Dynamically detects brandId and uses active session cookies
+ * - Smart Brand Extraction: Infers brands from titles, product metadata, and dictionary
+ * - Results Grid Tab: Filter by brand, category, search, and sort by discount/price
  */
 
 (function () {
@@ -30,45 +26,84 @@
     window.__aznowFab.remove();
   }
 
-  // Detect brandId from sessionStorage, URL parameters, or links
-  var brandId = sessionStorage.getItem('__aznowBrandId');
-  if (!brandId) {
-    var searchParams = new URLSearchParams(location.search);
-    brandId = searchParams.get('qcbrand') || searchParams.get('brandId');
+  // Dynamic Brand ID detection (no hardcoded fallback unless user is outside Tez)
+  function detectBrandId() {
+    var stored = sessionStorage.getItem('__aznowBrandId');
+    if (stored) return stored;
+
+    var sp = new URLSearchParams(location.search);
+    var bId = sp.get('qcbrand') || sp.get('brandId') || sp.get('almBrandId');
+    if (bId) return bId;
+
+    var brandLink = document.querySelector('a[href*="brandId="], a[href*="qcbrand="], a[href*="almBrandId="]');
+    if (brandLink) {
+      var m = brandLink.href.match(/(?:brandId|qcbrand|almBrandId)=([^&]+)/);
+      if (m && m[1]) return m[1];
+    }
+
+    var stateScripts = document.querySelectorAll('script[type="a-state"]');
+    for (var i = 0; i < stateScripts.length; i++) {
+      try {
+        var txt = stateScripts[i].textContent || '';
+        if (txt.indexOf('almBrandId') !== -1) {
+          var parsed = JSON.parse(txt);
+          if (parsed && parsed.almBrandId) return parsed.almBrandId;
+        }
+      } catch (e) {}
+    }
+
+    var htmlMatch = document.documentElement.innerHTML.match(/almBrandId['"&:=\s]+([A-Za-z0-9_-]{8,14})/);
+    if (htmlMatch && htmlMatch[1]) return htmlMatch[1];
+
+    return null;
   }
-  if (!brandId) {
-    var brandLink = document.querySelector('a[href*="brandId="], a[href*="qcbrand="]');
-    var match = brandLink ? brandLink.href.match(/(?:brandId|qcbrand)=([^&]+)/) : null;
-    brandId = match ? match[1] : null;
+
+  var brandId = detectBrandId();
+  if (brandId) {
+    sessionStorage.setItem('__aznowBrandId', brandId);
   }
-  if (!brandId) {
-    brandId = prompt('Please enter your Amazon Now Brand ID (qcbrand / brandId):');
+
+  function ensureBrandId() {
+    if (!brandId) {
+      brandId = detectBrandId() || prompt('Please enter your Amazon Now Brand ID (e.g. qqfsWw9RkO):');
+      if (brandId) sessionStorage.setItem('__aznowBrandId', brandId);
+    }
+    return brandId;
   }
-  if (!brandId) {
-    alert('No brandId found. Please run this script on an Amazon Now page.');
-    return;
-  }
-  sessionStorage.setItem('__aznowBrandId', brandId);
 
   // Auto-detect current search keyword from URL or input
   var initialKeyword = '';
   try {
     var sp = new URLSearchParams(location.search);
-    initialKeyword = sp.get('searchKeyword') || sp.get('keyword') || '';
+    initialKeyword = sp.get('searchKeyword') || sp.get('keyword') || sp.get('k') || '';
     if (!initialKeyword) {
-      var domSearch = document.querySelector('input[type="search"], input[name="field-keywords"]');
+      var domSearch = document.querySelector('input[type="search"], input[name="field-keywords"], input[name="k"]');
       if (domSearch && domSearch.value) {
         initialKeyword = domSearch.value.trim();
       }
     }
   } catch (e) {}
 
+  // Amazon India Discount Refinement Node Map (rnid: 2665398031)
+  var discountPillsData = [
+    { pct: 10, node: '2665399031', label: '10%' },
+    { pct: 25, node: '2665400031', label: '25%' },
+    { pct: 35, node: '2665402031', label: '35%' },
+    { pct: 50, node: '2665401031', label: '50%' },
+    { pct: 60, node: '27060456031', label: '60%' },
+    { pct: 70, node: '27060457031', label: '70%' }
+  ];
+
+  var selectedMinDiscount = 60; // Default to 60% off
+  var selectedDiscountNode = '27060456031';
+  var TEZ_SRS_NODE = '100147972031';
+
   // Mapping of category nodes requiring merch endpoint vs category endpoint
   var merchMap = {
     216450600031: 1 // Ice Cream Store
   };
 
-  // Pre-configured hierarchical categories and subcategories
+  // Structured Categories & Subcategories
   var categoriesData = [
     {
       icon: '🌾',
@@ -243,6 +278,21 @@
   ];
 
   // URL builders
+  function buildGlobalSearchUrl(discNodeId, page) {
+    return (
+      'https://www.amazon.in/s?i=amazontez&srs=' +
+      TEZ_SRS_NODE +
+      '&bbn=' +
+      TEZ_SRS_NODE +
+      '&rh=n%3A' +
+      TEZ_SRS_NODE +
+      '%2Cp_n_pct-off-with-tax%3A' +
+      discNodeId +
+      '&s=pct-off-with-tax&dc&page=' +
+      page
+    );
+  }
+
   function buildCategoryUrl(nodeId, offset) {
     var endpoint = merchMap[nodeId] ? 'merch' : 'category';
     return (
@@ -354,7 +404,11 @@
       'milky mist',
       'uncle chipps',
       'red bull',
-      'mountain dew'
+      'mountain dew',
+      'amazon basics',
+      'amazon brand',
+      'american tourister',
+      'mother sparsh'
     ];
 
     for (var m = 0; m < multiBrands.length; m++) {
@@ -376,15 +430,18 @@
     return first;
   }
 
-  // Parse product object
+  // Parse product object from Tez API
   function parseProduct(y, defaultCat) {
     if (!y || !y.asin) return null;
+
     var disc = y.savings && y.savings.percentage ? parseInt(y.savings.percentage, 10) : 0;
     var bp = y.buyingPrice ? y.buyingPrice.amount : null;
     var lp = y.listPrice ? y.listPrice.amount : null;
+
     if (!disc && lp && bp && lp > bp) {
       disc = Math.round(((lp - bp) / lp) * 100);
     }
+
     var img =
       (y.heroImage && (y.heroImage.mediumResImageUrl || y.heroImage.lowResImageUrl || y.heroImage.highResImageUrl)) ||
       (y.productImages && y.productImages[0] && (y.productImages[0].lowResImageUrl || y.productImages[0].highResImageUrl)) ||
@@ -395,14 +452,6 @@
     var categories = [];
     if (defaultCat && typeof defaultCat === 'string' && defaultCat.trim()) {
       categories.push(defaultCat.trim());
-    } else {
-      var rawCat =
-        (y.category && (typeof y.category === 'string' ? y.category : (y.category.name || y.category.displayName))) ||
-        y.categoryName ||
-        '';
-      if (typeof rawCat === 'string' && rawCat.trim()) {
-        categories.push(rawCat.trim());
-      }
     }
 
     return {
@@ -418,7 +467,84 @@
     };
   }
 
-  // Render results in new tab
+  // Parse HTML page from Amazon Now Global Search (/s?i=amazontez)
+  function parseHtmlSearchPage(htmlText) {
+    var doc = new DOMParser().parseFromString(htmlText, 'text/html');
+    var cards = doc.querySelectorAll('div[data-asin]:not([data-asin=""])[data-component-type="s-search-result"]');
+    var parsed = [];
+
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var asin = card.getAttribute('data-asin');
+      if (!asin) continue;
+
+      // Skip sponsored cards
+      if (card.querySelector('.puis-sponsored-label-text, [data-component-type="sp-sponsored-result"]')) {
+        continue;
+      }
+
+      var titleEl = card.querySelector('h2 span, h2 a span');
+      if (!titleEl) continue;
+      var title = titleEl.textContent.trim();
+      if (!title) continue;
+
+      var offerEl = card.querySelector('[data-csa-c-price-to-pay]');
+      var bp = null;
+      var lp = null;
+
+      if (offerEl) {
+        var bpAttr = offerEl.getAttribute('data-csa-c-price-to-pay');
+        var lpAttr = offerEl.getAttribute('data-csa-c-strike-through-price');
+        if (bpAttr) bp = parseFloat(bpAttr);
+        if (lpAttr) lp = parseFloat(lpAttr);
+      }
+
+      if (bp === null || isNaN(bp)) {
+        var priceTextEl = card.querySelector('.a-price:not([data-a-strike]) .a-offscreen');
+        if (priceTextEl) bp = parseFloat(priceTextEl.textContent.replace(/[^\d.]/g, ''));
+      }
+      if (lp === null || isNaN(lp)) {
+        var mrpTextEl = card.querySelector('.a-price[data-a-strike] .a-offscreen');
+        if (mrpTextEl) lp = parseFloat(mrpTextEl.textContent.replace(/[^\d.]/g, ''));
+      }
+
+      if (bp === null || isNaN(bp)) continue;
+      if (lp === null || isNaN(lp)) lp = bp;
+
+      var disc = lp > bp ? Math.round(((lp - bp) / lp) * 100) : 0;
+      if (!disc) {
+        var discTextMatch = card.textContent.match(/\((\d+)%\s*off\)/i);
+        if (discTextMatch) disc = parseInt(discTextMatch[1], 10);
+      }
+
+      var imgEl = card.querySelector('img.s-image');
+      var img = imgEl ? (imgEl.getAttribute('src') || '') : '';
+
+      var hintEl = card.querySelector('[data-wdg]');
+      var catRaw = hintEl
+        ? (hintEl.getAttribute('data-wdg') || '').replace(/_display_on_website/g, '').replace(/_/g, ' ')
+        : 'Amazon Now';
+
+      parsed.push({
+        t: title,
+        a: asin,
+        bp: bp,
+        lp: lp,
+        d: disc,
+        img: img,
+        pz: '',
+        b: extractBrand(title, null),
+        c: [catRaw.toUpperCase()]
+      });
+    }
+
+    return {
+      items: parsed,
+      totalCards: cards.length
+    };
+  }
+
+  // Open Results Tab with Full Grid & Filtering
   function openResultsTab(pageTitle, items) {
     items.sort(function (a, b) {
       return b.d - a.d;
@@ -610,7 +736,7 @@
   // Popup Menu Panel
   var panel = document.createElement('div');
   panel.style.cssText =
-    'display:flex;flex-direction:column;margin-bottom:10px;background:#ffffff;padding:14px;border-radius:12px;border:1px solid #d0d7de;box-shadow:0 12px 32px rgba(0,0,0,0.18),0 2px 6px rgba(0,0,0,0.08);width:350px;max-width:calc(100vw - 28px);height:84vh;max-height:680px;min-height:480px;box-sizing:border-box;';
+    'display:flex;flex-direction:column;margin-bottom:10px;background:#ffffff;padding:14px;border-radius:12px;border:1px solid #d0d7de;box-shadow:0 12px 32px rgba(0,0,0,0.18),0 2px 6px rgba(0,0,0,0.08);width:360px;max-width:calc(100vw - 28px);height:86vh;max-height:720px;min-height:500px;box-sizing:border-box;';
 
   // Header inside Popup
   var hdr = document.createElement('div');
@@ -620,7 +746,52 @@
     '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">⚡</span><span style="font-weight:700;font-size:14px;color:#0f1111;">Amazon Now Deals</span></div><div id="__aznowClose" style="cursor:pointer;font-size:18px;color:#64748b;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .15s;">✕</div>';
   panel.appendChild(hdr);
 
-  // Section 1 (Top): Keyword Search
+  // Section 0: Discount Filter Pills (10%, 25%, 35%, 50%, 60%, 70%)
+  var discSec = document.createElement('div');
+  discSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
+  discSec.innerHTML =
+    '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Min Discount Filter</div>';
+  var pillRow = document.createElement('div');
+  pillRow.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px;';
+  var pillButtons = [];
+
+  discountPillsData.forEach(function (pObj) {
+    var b = document.createElement('button');
+    b.textContent = pObj.label;
+    b.__pct = pObj.pct;
+    b.__node = pObj.node;
+    b.style.cssText =
+      'padding:6px 2px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid #cbd5e1;transition:all .12s;touch-action:manipulation;';
+    b.onclick = function () {
+      selectedMinDiscount = pObj.pct;
+      selectedDiscountNode = pObj.node;
+      updateDiscountPillsUI();
+      updateCategoryUI();
+    };
+    pillButtons.push(b);
+    pillRow.appendChild(b);
+  });
+  discSec.appendChild(pillRow);
+  panel.appendChild(discSec);
+
+  // Section 0.5: Global Deals Fetch Button
+  var globalBtn = document.createElement('button');
+  globalBtn.style.cssText =
+    'width:100%;padding:10px 12px;margin-bottom:10px;background:#058552;border:1px solid #046c42;border-radius:8px;font-size:12.5px;font-weight:700;color:#ffffff;cursor:pointer;text-align:center;box-shadow:0 2px 6px rgba(5,133,82,0.25);transition:all .15s;touch-action:manipulation;';
+  panel.appendChild(globalBtn);
+
+  function updateDiscountPillsUI() {
+    pillButtons.forEach(function (b) {
+      var active = b.__pct === selectedMinDiscount;
+      b.style.background = active ? '#058552' : '#f8fafc';
+      b.style.color = active ? '#ffffff' : '#334155';
+      b.style.borderColor = active ? '#046c42' : '#cbd5e1';
+    });
+    globalBtn.textContent = '🔥 Fetch All Store Deals (' + selectedMinDiscount + '%+ Off)';
+  }
+  updateDiscountPillsUI();
+
+  // Section 1: Keyword Search
   var searchSec = document.createElement('div');
   searchSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
   searchSec.innerHTML =
@@ -642,13 +813,13 @@
     '<span style="font-size:10.5px;font-weight:600;color:#64748b;">Max 3 subcategories</span>';
   panel.appendChild(divider);
 
-  // Section 2 (Middle): Scrollable Category List
+  // Section 2: Scrollable Category List
   var list = document.createElement('div');
   list.style.cssText =
     'overflow-y:auto;flex:1;min-height:0;padding-right:4px;display:flex;flex-direction:column;gap:6px;margin:0 0 10px;-webkit-overflow-scrolling:touch;';
   panel.appendChild(list);
 
-  // Section 3 (Bottom): Footer Action Area
+  // Section 3: Footer Action Area
   var footerSec = document.createElement('div');
   footerSec.style.cssText =
     'display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid #e2e8f0;background:#fff;';
@@ -707,13 +878,13 @@
       kwBtn.disabled = false;
       kwBtn.style.opacity = '1';
       kwBtn.style.cursor = 'pointer';
-      var preview = val.length > 12 ? val.slice(0, 12) + '...' : val;
-      kwBtn.textContent = 'Search "' + preview + '"';
+      var preview = val.length > 10 ? val.slice(0, 10) + '...' : val;
+      kwBtn.textContent = 'Search "' + preview + '" (' + selectedMinDiscount + '%+)';
     } else {
       kwBtn.disabled = true;
       kwBtn.style.opacity = '0.5';
       kwBtn.style.cursor = 'not-allowed';
-      kwBtn.textContent = 'Search';
+      kwBtn.textContent = 'Search (' + selectedMinDiscount + '%+)';
     }
   }
 
@@ -722,6 +893,7 @@
 
   // Dynamic state updater for Subcategory and Category UI
   function updateCategoryUI() {
+    updateSearchUI();
     subcategoryButtons.forEach(function (btn) {
       var isSelected = selectedCategories.some(function (item) {
         return item.nodeId === btn.__nodeId;
@@ -777,11 +949,11 @@
       fetchCatBtn.style.cursor = 'pointer';
       fetchCatBtn.style.boxShadow = '0 2px 6px rgba(252,210,0,0.35)';
       fetchCatBtn.textContent =
-        'Fetch Deals (' +
+        'Fetch ' +
         selectedCategories.length +
-        ' subcategor' +
-        (selectedCategories.length === 1 ? 'y' : 'ies') +
-        ') →';
+        ' Subcat (' +
+        selectedMinDiscount +
+        '%+ Off) →';
     }
   }
 
@@ -903,15 +1075,27 @@
   });
 
   function setAllControlsDisabled(disabled) {
+    globalBtn.disabled = disabled;
+    globalBtn.style.opacity = disabled ? '0.7' : '1';
+    globalBtn.style.cursor = disabled ? 'wait' : 'pointer';
+
     kwBtn.disabled = disabled;
     kwBtn.style.opacity = disabled ? '0.7' : (kwInput.value.trim() ? '1' : '0.5');
     kwBtn.style.cursor = disabled ? 'wait' : (kwInput.value.trim() ? 'pointer' : 'not-allowed');
     kwInput.disabled = disabled;
+
     fetchCatBtn.disabled = disabled;
     fetchCatBtn.style.opacity = disabled ? '0.7' : (selectedCategories.length ? '1' : '0.5');
     fetchCatBtn.style.cursor = disabled ? 'wait' : (selectedCategories.length ? 'pointer' : 'not-allowed');
+
     clearBtn.style.pointerEvents = disabled ? 'none' : 'auto';
     clearBtn.style.opacity = disabled ? '0.5' : '1';
+
+    pillButtons.forEach(function (b) {
+      b.disabled = disabled;
+      b.style.opacity = disabled ? '0.6' : '1';
+    });
+
     subcategoryButtons.forEach(function (btn) {
       btn.disabled = disabled;
       btn.style.opacity = disabled ? '0.5' : '1';
@@ -921,13 +1105,92 @@
     });
   }
 
-  // 1. Keyword Search Fetch Handler
+  // 1. Global Store Fetch Handler (/s?i=amazontez)
+  globalBtn.onclick = async function () {
+    setAllControlsDisabled(true);
+    try {
+      var seenAsins = {};
+      var items = [];
+      var page = 1;
+      var MAX_PAGES = 15;
+      var emptyStreak = 0;
+
+      while (page <= MAX_PAGES) {
+        var batchPages = [page];
+        if (page + 1 <= MAX_PAGES) batchPages.push(page + 1);
+
+        globalBtn.textContent =
+          'Scanning P' + batchPages.join(', P') + ' (' + items.length + ' found)...';
+
+        var results = await Promise.all(
+          batchPages.map(function (p) {
+            return fetch(buildGlobalSearchUrl(selectedDiscountNode, p), {
+              credentials: 'include'
+            })
+              .then(function (r) {
+                return r.ok ? r.text() : '';
+              })
+              .catch(function () {
+                return '';
+              });
+          })
+        );
+
+        var stopLoop = false;
+        for (var i = 0; i < results.length; i++) {
+          var html = results[i];
+          if (!html) {
+            stopLoop = true;
+            break;
+          }
+          var parsedPage = parseHtmlSearchPage(html);
+          if (parsedPage.totalCards === 0) {
+            stopLoop = true;
+            break;
+          }
+
+          var addedOnPage = 0;
+          for (var j = 0; j < parsedPage.items.length; j++) {
+            var prod = parsedPage.items[j];
+            if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
+              seenAsins[prod.a] = 1;
+              items.push(prod);
+              addedOnPage++;
+            }
+          }
+
+          if (addedOnPage === 0) {
+            emptyStreak++;
+            if (emptyStreak >= 2) {
+              stopLoop = true;
+              break;
+            }
+          } else {
+            emptyStreak = 0;
+          }
+        }
+
+        if (stopLoop) break;
+        page += batchPages.length;
+        await sleep(350);
+      }
+
+      openResultsTab('Amazon Now Global (' + selectedMinDiscount + '%+ Off)', items);
+    } finally {
+      setAllControlsDisabled(false);
+      updateDiscountPillsUI();
+      updateCategoryUI();
+    }
+  };
+
+  // 2. Keyword Search Fetch Handler
   async function handleKeywordSearch() {
     var kw = kwInput.value.trim();
     if (!kw) {
       kwInput.focus();
       return;
     }
+    if (!ensureBrandId()) return;
 
     setAllControlsDisabled(true);
 
@@ -941,7 +1204,7 @@
 
       while (hasMore && offset < 30) {
         var batchOffsets = [];
-        for (var b = 0; b < BATCH_SIZE && (offset + b) < 30; b++) {
+        for (var b = 0; b < BATCH_SIZE && offset + b < 30; b++) {
           batchOffsets.push(offset + b);
         }
         var pageLabels = batchOffsets
@@ -1013,7 +1276,7 @@
 
             for (var p = 0; p < prods.length; p++) {
               var prod = parseProduct(prods[p]);
-              if (prod && prod.a && !seenAsins[prod.a]) {
+              if (prod && prod.a && prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
                 seenAsins[prod.a] = 1;
                 items.push(prod);
               }
@@ -1044,7 +1307,7 @@
         }
       }
 
-      openResultsTab('Search: "' + kw + '"', items);
+      openResultsTab('Search: "' + kw + '" (' + selectedMinDiscount + '%+ Off)', items);
     } finally {
       setAllControlsDisabled(false);
       updateSearchUI();
@@ -1059,9 +1322,10 @@
     }
   };
 
-  // 2. Category Fetch Handler
+  // 3. Category Fetch Handler
   fetchCatBtn.onclick = async function () {
     if (selectedCategories.length === 0) return;
+    if (!ensureBrandId()) return;
 
     setAllControlsDisabled(true);
 
@@ -1084,7 +1348,7 @@
 
         while (hasMore && offset < 30) {
           var batchOffsets = [];
-          for (var b = 0; b < BATCH_SIZE && (offset + b) < 30; b++) {
+          for (var b = 0; b < BATCH_SIZE && offset + b < 30; b++) {
             batchOffsets.push(offset + b);
           }
           var pageLabels = batchOffsets
@@ -1161,7 +1425,7 @@
 
                 for (var p = 0; p < prods.length; p++) {
                   var prod = parseProduct(prods[p], curCat.name);
-                  if (prod && prod.a) {
+                  if (prod && prod.a && prod.d >= selectedMinDiscount) {
                     if (!seenAsins[prod.a]) {
                       seenAsins[prod.a] = prod;
                       items.push(prod);
@@ -1203,7 +1467,7 @@
         }
       }
 
-      openResultsTab(catNames, items);
+      openResultsTab(catNames + ' (' + selectedMinDiscount + '%+ Off)', items);
     } finally {
       setAllControlsDisabled(false);
       selectedCategories = [];

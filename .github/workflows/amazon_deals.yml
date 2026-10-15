@@ -2,10 +2,8 @@ name: Amazon Now Deals Alert
 
 on:
   schedule:
-    # Built-in GitHub Actions schedule: hourly from 06:01 AM to 12:01 AM (midnight) IST
-    # 06:01 IST = 00:31 UTC, 12:01 AM IST = 18:31 UTC (UTC +5:30)
-    # Dormant between 00:02 AM and 06:00 AM IST while stores are closed
-    - cron: '31 0-18 * * *'
+    # Runs at 1 minute past every hour
+    - cron: '1 * * * *'
 
   workflow_dispatch:
     inputs:
@@ -44,7 +42,7 @@ jobs:
           pip install -r bot/requirements.txt
 
       - name: Restore Deals Cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: data/posted_deals.json
           key: amazon-deals-cache-${{ github.run_id }}
@@ -55,18 +53,17 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          AMAZON_BRAND_ID: ${{ secrets.AMAZON_BRAND_ID }}
           AMAZON_COOKIE: ${{ secrets.AMAZON_COOKIE }}
+          AMAZON_BRAND_ID: ${{ secrets.AMAZON_BRAND_ID }}
           MIN_DISCOUNT: ${{ github.event.client_payload.min_discount || inputs.min_discount || secrets.MIN_DISCOUNT || '70' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
-          MAX_WORKERS: '5'
           CACHE_FILE: data/posted_deals.json
         run: |
           python -m bot.main
 
       - name: Save Deals Cache
         if: always()
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         with:
           path: data/posted_deals.json
-          key: amazon-deals-cache-${{ github.run_id }}
+          key: amazon-deals-cache-${{ github.run_id }}-${{ github.run_attempt }}
