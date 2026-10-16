@@ -18,44 +18,104 @@ class TelegramNotifier:
     def is_configured(self):
         return bool(self.bot_token and self.chat_id)
 
-    def format_deal_message(self, deal):
-        """Formats a deal into a clean text message with HTML markup."""
-        title = html.escape(deal.get("title") or "Product")
-        brand = html.escape(deal.get("brand") or "").strip()
-        pack = html.escape(deal.get("pack_size") or "").strip()
+    def format_deal_block(self, deal):
+        """
+        Formats a single deal block according to user spec:
+        Title
+        Category
+        🔥 <Discount>% OFF || ₹<Price> (MRP: ₹<MRP>) || Click here
+        """
+        title = html.escape((deal.get("title") or "Product").strip())
+        category = html.escape((deal.get("category") or "").strip())
         fsp = deal.get("fsp", 0)
         mrp = deal.get("mrp", fsp)
         disc = deal.get("discount", 0)
-        link = deal.get("link", "https://www.amazon.in")
-        category = html.escape(deal.get("category") or "").strip()
+        link = deal.get("url") or deal.get("link") or "https://www.amazon.in"
 
-        header = f"<b>{f'[{brand}] ' if brand else ''}{title}</b>"
-        if pack:
-            header += f"\n📦 <i>{pack}</i>"
+        price_part = f"₹{fsp}"
+        if mrp and mrp > fsp:
+            price_part += f" (MRP: <strike>₹{mrp}</strike>)"
 
         lines = [
-            header,
-            f"🔥 <b>{disc}% OFF</b>",
-            f"💰 <b>₹{fsp}</b>" + (f" (MRP: <strike>₹{mrp}</strike>)" if mrp and mrp != fsp else ""),
-            f"🏷️ <i>{category}</i>" if category else "",
-            "",
-            f"👉 <a href=\"{link}\">Buy on Amazon Now</a>"
+            f"<b>{title}</b>",
+            f"<i>{category}</i>" if category else "",
+            f"🔥 <b>{disc}% OFF</b> || <b>{price_part}</b> || <a href=\"{link}\">Click here</a>"
         ]
-        # Filter out empty lines
-        return "\n".join([line for line in lines if line is not None])
+        return "\n".join([line for line in lines if line])
+
+    def format_deal_message(self, deal):
+        """Formats a single deal as a standalone message (backward compatibility)."""
+        return self.format_deal_block(deal)
 
     def send_deal(self, deal):
-        """Sends a deal alert to Telegram with link previews disabled."""
+        """Sends a single deal alert to Telegram (backward compatibility)."""
         if not self.is_configured:
             print("  [Telegram] Not configured (missing bot token or chat ID). Skipping alert.")
             return False
 
-        message = self.format_deal_message(deal)
+        message = self.format_deal_block(deal)
         success = self._send_text(message)
-
-        # Respect Telegram rate limit (~30 msgs/min per chat)
         time.sleep(1.0)
         return success
+
+    def send_deals_batch(self, deals, min_discount=60):
+        """
+        Batches multiple deals into compact digest messages up to Telegram's 4096 char limit.
+        Returns a list of ASINs that were successfully sent.
+        """
+        if not self.is_configured:
+            print("  [Telegram] Not configured (missing bot token or chat ID). Skipping alerts.")
+            return []
+
+        if not deals:
+            return []
+
+        max_items_per_msg = getattr(config, "MAX_ITEMS_PER_MESSAGE", 10)
+        max_chars_per_msg = 3600  # Safe headroom below 4096
+
+        batches = []
+        current_batch = []
+        current_len = 0
+
+        for deal in deals:
+            block = self.format_deal_block(deal)
+            block_len = len(block) + 35  # Approximate divider length
+            if current_batch and (current_len + block_len > max_chars_per_msg or len(current_batch) >= max_items_per_msg):
+                batches.append(current_batch)
+                current_batch = [deal]
+                current_len = block_len
+            else:
+                current_batch.append(deal)
+                current_len += block_len
+
+        if current_batch:
+            batches.append(current_batch)
+
+        total_batches = len(batches)
+        print(f"  [Telegram] Grouped {len(deals)} deals into {total_batches} batched message(s)...")
+
+        successful_asins = []
+
+        for b_idx, batch in enumerate(batches, start=1):
+            header = f"⚡ <b>Amazon Now Deals ({min_discount}%+ Off)</b> [{b_idx}/{total_batches}]\n"
+            divider = "\n" + "─" * 28 + "\n"
+            blocks = [self.format_deal_block(d) for d in batch]
+            message_text = header + divider + divider.join(blocks)
+
+            print(f"  [Telegram] Sending batch {b_idx}/{total_batches} ({len(batch)} items, {len(message_text)} chars)...")
+            success = self._send_text(message_text)
+            if success:
+                for d in batch:
+                    asin = d.get("asin")
+                    if asin:
+                        successful_asins.append(asin)
+            else:
+                print(f"  ❌ Failed to send Telegram batch {b_idx}/{total_batches}")
+
+            if b_idx < total_batches:
+                time.sleep(1.5)
+
+        return successful_asins
 
     def _send_text(self, text):
         url = f"{self.base_url}/sendMessage"
@@ -73,7 +133,7 @@ class TelegramNotifier:
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            with urllib.request.urlopen(req, context=ctx, timeout=10) as res:
+            with urllib.request.urlopen(req, context=ctx, timeout=12) as res:
                 res_data = json.loads(res.read().decode("utf-8"))
                 return res_data.get("ok", False)
         except Exception as e:

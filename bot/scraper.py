@@ -65,6 +65,76 @@ def clean_brand_name(brand_val):
         brand_str = brand_str.split(" ", 1)[1].strip()
     return brand_str
 
+def infer_category(title, wdg_hint=""):
+    """Infers clean category name from title keywords and dark-store metadata."""
+    t = (title or "").lower()
+    w = (wdg_hint or "").lower()
+
+    # 1. Pooja / Religious Needs
+    if re.search(r"\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy)\b", t):
+        return "Pooja & Religious Needs"
+
+    # 2. Snacks, Sweets & Treats
+    if re.search(r"\b(chocolate|chocolates|chips|namkeen|biscuit|biscuits|cookies|cookie|kurkure|sweets|mithai|chikki|popcorn|nachos|makhana|candies|candy|cake|cakes|brownie|dry\s*fruits|nuts|almonds|cashews|raisins|peanuts)\b", t):
+        return "Snacks, Sweets & Treats"
+
+    # 3. Dairy, Bread & Eggs
+    if re.search(r"\b(milk|curd|yogurt|paneer|cheese|butter|bread|eggs?|fresh\s*cream|whipping\s*cream|cooking\s*cream|dairy\s*whitener)\b", t) or "dairy" in w:
+        return "Dairy, Bread & Eggs"
+
+    # 4. Grocery & Staples
+    if re.search(r"\b(atta|flour|rice|dal|dals|pulses|chana|cooking\s*oil|mustard\s*oil|sunflower\s*oil|refined\s*oil|ghee|salt|sugar|masala|spices|poha|daliya|soya|grains|besan|maida|sooji)\b", t) or "grocery" in w:
+        return "Grocery & Staples"
+
+    # 5. Beverages & Drinks
+    if re.search(r"\b(tea|coffee|juice|juices|coke|pepsi|cola|drink|drinks|soda|energy\s*drink|milkshake|lassi|buttermilk|squash|syrup)\b", t):
+        return "Beverages & Drinks"
+
+    # 6. Ice Creams & Frozen
+    if re.search(r"\b(ice\s*cream|cornetto|kulfi|frozen)\b", t):
+        return "Ice Creams & Frozen"
+
+    # 7. Personal Care & Beauty
+    if re.search(r"\b(shampoo|conditioner|soap|body\s*wash|face\s*wash|lotion|serum|sunscreen|cream|moisturiz|perfume|deodorant|deo|lipstick|kajal|makeup|skincare|hair|facial)\b", t) or "beauty" in w:
+        return "Personal Care & Beauty"
+
+    # 8. Oral Care & Health
+    if re.search(r"\b(toothpaste|toothbrush|mouthwash|protein|supplement|vitamins?|creatine|condom)\b", t):
+        return "Oral Care & Health"
+
+    # 9. Home Care & Cleaning
+    if re.search(r"\b(detergent|liquid\s*wash|dishwash|cleaner|lizol|harpic|mop|broom|repellent|garbage\s*bags?|napkin|tissue|fabric|vanish|comfort|surf|aerial|tide)\b", t) or "home" in w:
+        return "Home & Cleaning"
+
+    # 10. Kitchen & Dining
+    if re.search(r"\b(cooker|chopper|bottle|flask|container|tiffin|pan|knife|kettle|plate|glass|mug|utensil|board)\b", t) or "kitchen" in w:
+        return "Kitchen & Dining"
+
+    # 11. Electronics & Gadgets
+    if re.search(r"\b(watch|smartwatch|cable|charger|earphones?|headphones?|mouse|keyboard|power\s*bank|adapter|battery|bulb|led|tech)\b", t) or "ce_" in w or "pc_" in w:
+        return "Electronics & Gadgets"
+
+    # 12. Luggage & Bags
+    if re.search(r"\b(backpack|bag|suitcase|trolley|duffle|wallet|pouch)\b", t) or "luggage" in w:
+        return "Luggage & Bags"
+
+    # 13. Baby Care
+    if re.search(r"\b(diaper|diapers|baby\s*wipes?|baby\s*lotion|baby\s*wash|baby\s*oil)\b", t) or "baby" in w:
+        return "Baby Care"
+
+    if w:
+        clean_wdg = w.replace("_display_on_website", "").replace("_", " ").strip()
+        return clean_wdg.title()
+
+    return "General Essentials"
+
+def is_pooja_item(title, category=""):
+    """Checks whether an item is a Pooja/Religious item."""
+    if category == "Pooja & Religious Needs":
+        return True
+    t = (title or "").lower()
+    return bool(re.search(r"\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy)\b", t))
+
 class AmazonNowScraper:
     def __init__(self, brand_id=None, cookie_str=None):
         self.brand_id = (brand_id or config.AMAZON_BRAND_ID).strip()
@@ -200,7 +270,8 @@ class AmazonNowScraper:
 
                     # Category / Department Hint
                     hint_el = card.select_one("[data-wdg]")
-                    cat_hint = hint_el.get("data-wdg", "").replace("_display_on_website", "").replace("_", " ").strip() if hint_el else "Amazon Now"
+                    wdg_attr = hint_el.get("data-wdg", "").strip() if hint_el else ""
+                    category = infer_category(title, wdg_attr)
 
                     brand = clean_brand_name(extract_brand(title))
 
@@ -213,7 +284,8 @@ class AmazonNowScraper:
                         "image": img,
                         "url": f"https://www.amazon.in/dp/{asin}",
                         "brand": brand,
-                        "category": cat_hint.title() if cat_hint else "Amazon Now"
+                        "category": category,
+                        "is_pooja": is_pooja_item(title, category)
                     }
 
                     seen_asins.add(asin)
@@ -316,6 +388,7 @@ class AmazonNowScraper:
                         hero = p.get("heroImage", {})
                         img = hero.get("mediumResImageUrl") or hero.get("lowResImageUrl") or ""
 
+                        cat = infer_category(title, "") if cat_name == "Unknown Category" else cat_name
                         items.append({
                             "asin": asin,
                             "title": title,
@@ -325,7 +398,8 @@ class AmazonNowScraper:
                             "image": img,
                             "url": f"https://www.amazon.in/dp/{asin}",
                             "brand": brand,
-                            "category": cat_name
+                            "category": cat,
+                            "is_pooja": is_pooja_item(title, cat)
                         })
                         seen_asins.add(asin)
 

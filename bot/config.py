@@ -43,6 +43,8 @@ MAX_WORKERS = int(os.getenv("MAX_WORKERS", "5"))
 INTER_PAGE_DELAY = float(os.getenv("INTER_PAGE_DELAY", "0.8"))
 CACHE_FILE = os.getenv("CACHE_FILE", os.path.join("data", "posted_deals.json"))
 DRY_RUN = os.getenv("DRY_RUN", "false").lower() in ("true", "1", "yes")
+EXCLUDE_POOJA = os.getenv("EXCLUDE_POOJA", "true").lower() in ("true", "1", "yes")
+MAX_ITEMS_PER_MESSAGE = int(os.getenv("MAX_ITEMS_PER_MESSAGE", "10"))
 
 # Specialized Retail Store node for Amazon Now (Tez)
 TEZ_SRS_NODE = "100147972031"

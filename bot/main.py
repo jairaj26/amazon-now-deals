@@ -91,10 +91,16 @@ def main():
 
     deals_to_alert = []
     suppressed_count = 0
+    pooja_filtered_count = 0
 
     for deal in all_deals:
         asin = deal.get("asin")
         if not asin:
+            continue
+
+        # Exclude Pooja items from alerts if configured
+        if config.EXCLUDE_POOJA and deal.get("is_pooja"):
+            pooja_filtered_count += 1
             continue
 
         D = deal.get("discount", 0)
@@ -130,6 +136,8 @@ def main():
             else:
                 suppressed_count += 1
 
+    if pooja_filtered_count > 0:
+        print(f"[*] Filtered out {pooja_filtered_count} Pooja & Religious items (EXCLUDE_POOJA=True)")
     print(f"[*] Deals to alert: {len(deals_to_alert)} | Suppressed: {suppressed_count}")
 
     # Initialize Telegram notifier
@@ -137,36 +145,52 @@ def main():
     posted_count = 0
 
     if deals_to_alert:
-        print(f"[*] Posting {len(deals_to_alert)} deal alerts to Telegram...")
+        print(f"[*] Dispatching {len(deals_to_alert)} deal alerts to Telegram...")
 
         for idx, (deal, trigger) in enumerate(deals_to_alert, start=1):
-            asin = deal["asin"]
             D = deal.get("discount", 0)
-            brand_str = f"[{deal['brand']}] " if deal.get('brand') else ""
-            print(f"  [{idx}/{len(deals_to_alert)}] ({trigger}) {brand_str}{deal['title'][:40]}... | {deal['discount']}% OFF | ₹{deal['fsp']} (MRP: ₹{deal['mrp']})")
+            print(f"  [{idx}/{len(deals_to_alert)}] ({trigger}) {deal['title'][:45]}... | {D}% OFF | ₹{deal['fsp']} (MRP: ₹{deal['mrp']})")
 
-            state_update = {
-                "discount": D,
-                "fsp": deal.get("fsp"),
-                "mrp": deal.get("mrp"),
-                "title": deal.get("title", ""),
-                "streak_start_ts": now,
-                "last_seen_ts": now,
-                "last_posted_ts": now,
-                "hidden_until_ts": now + DAY_SECONDS,
-                "muted_until_ts": 0.0
-            }
+        deals_list = [deal for deal, trigger in deals_to_alert]
 
-            if args.dry_run:
-                cache[asin] = state_update
+        if args.dry_run:
+            print(f"  [Dry Run] Alerts simulated. Updating cache for {len(deals_list)} items.")
+            for deal in deals_list:
+                asin = deal["asin"]
+                D = deal.get("discount", 0)
+                cache[asin] = {
+                    "discount": D,
+                    "fsp": deal.get("fsp"),
+                    "mrp": deal.get("mrp"),
+                    "title": deal.get("title", ""),
+                    "streak_start_ts": now,
+                    "last_seen_ts": now,
+                    "last_posted_ts": now,
+                    "hidden_until_ts": now + DAY_SECONDS,
+                    "muted_until_ts": 0.0
+                }
                 posted_count += 1
-            else:
-                success = notifier.send_deal(deal)
-                if success:
-                    cache[asin] = state_update
+        else:
+            successful_asins = notifier.send_deals_batch(deals_list, min_discount=args.min_discount)
+            success_set = set(successful_asins)
+            for deal in deals_list:
+                asin = deal["asin"]
+                if asin in success_set:
+                    D = deal.get("discount", 0)
+                    cache[asin] = {
+                        "discount": D,
+                        "fsp": deal.get("fsp"),
+                        "mrp": deal.get("mrp"),
+                        "title": deal.get("title", ""),
+                        "streak_start_ts": now,
+                        "last_seen_ts": now,
+                        "last_posted_ts": now,
+                        "hidden_until_ts": now + DAY_SECONDS,
+                        "muted_until_ts": 0.0
+                    }
                     posted_count += 1
                 else:
-                    print(f"      ❌ Failed to send Telegram alert for ASIN {asin}")
+                    print(f"      ❌ Failed to confirm Telegram delivery for ASIN {asin}")
 
     # Unconditional cache save on every execution
     save_cache(cache, args.cache)
