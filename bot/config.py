@@ -44,6 +44,7 @@ INTER_PAGE_DELAY = float(os.getenv("INTER_PAGE_DELAY", "0.8"))
 CACHE_FILE = os.getenv("CACHE_FILE", os.path.join("data", "posted_deals.json"))
 DRY_RUN = os.getenv("DRY_RUN", "false").lower() in ("true", "1", "yes")
 EXCLUDE_POOJA = os.getenv("EXCLUDE_POOJA", "true").lower() in ("true", "1", "yes")
+TRINKET_MAX_PRICE = float(os.getenv("TRINKET_MAX_PRICE", "15.0"))
 MAX_ITEMS_PER_MESSAGE = int(os.getenv("MAX_ITEMS_PER_MESSAGE", "10"))
 
 # Specialized Retail Store node for Amazon Now (Tez)

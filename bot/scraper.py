@@ -70,8 +70,8 @@ def infer_category(title, wdg_hint=""):
     t = (title or "").lower()
     w = (wdg_hint or "").lower()
 
-    # 1. Pooja / Religious Needs
-    if re.search(r"\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy)\b", t):
+    # 1. Pooja / Religious Needs & Rakhi
+    if re.search(r"\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy|rakhi|rakshabandhan|rakhee|rakshasutra|lumba|raakhee)\b", t):
         return "Pooja & Religious Needs"
 
     # 2. Snacks, Sweets & Treats
@@ -128,12 +128,24 @@ def infer_category(title, wdg_hint=""):
 
     return "General Essentials"
 
-def is_pooja_item(title, category=""):
-    """Checks whether an item is a Pooja/Religious item."""
+def is_trinket_item(title, category=""):
+    """
+    Checks whether an item is a Pooja essential, Rakhi, or artificial fashion jewelry (trinket)
+    which frequently have inflated MRPs.
+    """
     if category == "Pooja & Religious Needs":
         return True
     t = (title or "").lower()
-    return bool(re.search(r"\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy)\b", t))
+    return bool(re.search(
+        r"\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|"
+        r"sambrani|gopuram|mangalam|holy|rakhi|rakshabandhan|rakhee|rakshasutra|lumba|raakhee|"
+        r"bracelet|bangle|finger\s*rings?|earrings?|cufflinks?|keychains?|pendant|necklace|anklet)\b",
+        t
+    ))
+
+def is_pooja_item(title, category=""):
+    """Backward-compatible alias for is_trinket_item."""
+    return is_trinket_item(title, category)
 
 class AmazonNowScraper:
     def __init__(self, brand_id=None, cookie_str=None):
@@ -285,7 +297,8 @@ class AmazonNowScraper:
                         "url": f"https://www.amazon.in/dp/{asin}",
                         "brand": brand,
                         "category": category,
-                        "is_pooja": is_pooja_item(title, category)
+                        "is_pooja": is_pooja_item(title, category),
+                        "is_trinket": is_trinket_item(title, category)
                     }
 
                     seen_asins.add(asin)
@@ -399,7 +412,8 @@ class AmazonNowScraper:
                             "url": f"https://www.amazon.in/dp/{asin}",
                             "brand": brand,
                             "category": cat,
-                            "is_pooja": is_pooja_item(title, cat)
+                            "is_pooja": is_pooja_item(title, cat),
+                            "is_trinket": is_trinket_item(title, cat)
                         })
                         seen_asins.add(asin)
 

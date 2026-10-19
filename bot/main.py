@@ -98,10 +98,12 @@ def main():
         if not asin:
             continue
 
-        # Exclude Pooja items from alerts if configured
-        if config.EXCLUDE_POOJA and deal.get("is_pooja"):
-            pooja_filtered_count += 1
-            continue
+        # Exclude Pooja / Rakhi / Trinket items unless price is <= TRINKET_MAX_PRICE (e.g. ₹15)
+        is_trinket = deal.get("is_trinket") or deal.get("is_pooja")
+        if config.EXCLUDE_POOJA and is_trinket:
+            if deal.get("fsp", 0) > config.TRINKET_MAX_PRICE:
+                pooja_filtered_count += 1
+                continue
 
         D = deal.get("discount", 0)
         cached = cache.get(asin)
@@ -137,7 +139,7 @@ def main():
                 suppressed_count += 1
 
     if pooja_filtered_count > 0:
-        print(f"[*] Filtered out {pooja_filtered_count} Pooja & Religious items (EXCLUDE_POOJA=True)")
+        print(f"[*] Filtered out {pooja_filtered_count} Trinket/Rakhi/Pooja items with price > ₹{config.TRINKET_MAX_PRICE} (EXCLUDE_POOJA=True)")
     print(f"[*] Deals to alert: {len(deals_to_alert)} | Suppressed: {suppressed_count}")
 
     # Initialize Telegram notifier

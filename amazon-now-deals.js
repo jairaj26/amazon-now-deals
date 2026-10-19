@@ -342,7 +342,7 @@
     var w = (wdgHint || '').toLowerCase();
 
     // 1. Pooja / Religious Needs (distinct priority)
-    if (/\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy)\b/i.test(t)) {
+    if (/\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\s*wicks?|batti|sambrani|gopuram|mangalam|holy|rakhi|rakshabandhan|rakhee|rakshasutra|lumba|raakhee)\b/i.test(t)) {
       return 'Pooja & Religious Needs';
     }
 

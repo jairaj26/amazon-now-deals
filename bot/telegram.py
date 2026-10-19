@@ -79,7 +79,7 @@ class TelegramNotifier:
 
         for deal in deals:
             block = self.format_deal_block(deal)
-            block_len = len(block) + 35  # Approximate divider length
+            block_len = len(block) + 2  # Double newline separator
             if current_batch and (current_len + block_len > max_chars_per_msg or len(current_batch) >= max_items_per_msg):
                 batches.append(current_batch)
                 current_batch = [deal]
@@ -97,10 +97,8 @@ class TelegramNotifier:
         successful_asins = []
 
         for b_idx, batch in enumerate(batches, start=1):
-            header = f"⚡ <b>Amazon Now Deals ({min_discount}%+ Off)</b> [{b_idx}/{total_batches}]\n"
-            divider = "\n" + "─" * 28 + "\n"
             blocks = [self.format_deal_block(d) for d in batch]
-            message_text = header + divider + divider.join(blocks)
+            message_text = "\n\n".join(blocks)
 
             print(f"  [Telegram] Sending batch {b_idx}/{total_batches} ({len(batch)} items, {len(message_text)} chars)...")
             success = self._send_text(message_text)
