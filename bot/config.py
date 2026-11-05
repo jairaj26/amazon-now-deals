@@ -74,8 +74,8 @@ PRICE_BRACKETS = [
     {"label": "₹500+", "facet": "50000-"}
 ]
 
-# Pages to scan per price bracket (defaults to 2, e.g. 5 brackets * 2 pages = 10 requests)
-MAX_PAGES_PER_BRACKET = int(os.getenv("MAX_PAGES_PER_BRACKET", "2"))
+# Pages to scan per price bracket (defaults to 6, with early-exit when no further deals are found)
+MAX_PAGES_PER_BRACKET = int(os.getenv("MAX_PAGES_PER_BRACKET", "6"))
 
 # HTTP & API Headers
 # Modern Android Mobile User-Agent allows Amazon to return the mobile list view containing

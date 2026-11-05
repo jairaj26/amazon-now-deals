@@ -768,10 +768,9 @@
       '</div>' +
       '<div class=controls>' +
       '<div class=search-wrap><input type=search id=searchInput placeholder="Search deals..." autocomplete=off></div>' +
-      '<div class=filter-wrap id=categorySelectWrap style="display:none;position:relative"><span class=filter-label>Categories:</span><button type=button id=catDropdownBtn style="padding:7px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:12.5px;background:#fff;color:#111;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:140px"><span id=catBtnText>All Categories</span><span style="font-size:10px;color:#555">▼</span></button><div id=catDropdownPanel style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:240px;max-width:320px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;flex-direction:column;overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-bottom:1px solid #e2e8f0"><span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Filter Categories</span><div style="display:flex;gap:8px"><button type=button id=catSelectAllBtn style="background:none;border:none;font-size:11px;font-weight:600;color:#1a73e8;cursor:pointer;padding:0">All</button><span style="color:#cbd5e1">|</span><button type=button id=catClearAllBtn style="background:none;border:none;font-size:11px;font-weight:600;color:#ef4444;cursor:pointer;padding:0">Clear</button></div></div><div id=catCheckboxesList style="max-height:220px;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:3px"></div></div></div>' +
       '<div class=filter-wrap id=brandSelectWrap style="display:none"><span class=filter-label>Brand:</span><select id=brandSelect><option value="">All Brands</option></select></div>' +
-      '<div class=sort-wrap><span class=sort-label>Sort:</span><select id=sortSelect><option value=discount-desc selected>Discount: High to Low</option><option value=price-asc>Price: Low to High</option><option value=price-desc>Price: High to Low</option></select></div>' +
-      '<div style="display:flex;align-items:center;margin-left:auto"><label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#555;cursor:pointer;user-select:none"><input type=checkbox id=hideTrinketsCb checked style="cursor:pointer;accent-color:#058552;width:14px;height:14px">Hide Pooja/Trinkets (&gt;₹15)</label></div>' +
+      '<div class=filter-wrap id=priceSelectWrap><span class=filter-label>Price:</span><select id=priceSelect><option value="">All Prices</option><option value="0-50">Under ₹50</option><option value="50-100">₹50 – ₹100</option><option value="100-200">₹100 – ₹200</option><option value="200-500">₹200 – ₹500</option><option value="500+">Above ₹500</option></select></div>' +
+      '<div class=sort-wrap><span class=sort-label>Sort:</span><select id=sortSelect><option value=discount-desc selected>Discount: High to Low</option><option value=price-asc>Price: Low to High</option><option value=price-desc>Price: High to Low</option><option value=title-asc>Title: A to Z</option></select></div>' +
       '</div>' +
       '</div>' +
       '<div id=grid class=grid></div>' +
@@ -782,17 +781,10 @@
       ';' +
       'function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}' +
       'var brandCounts = {};' +
-      'var catCounts = {};' +
       'rawItems.forEach(function(it){' +
       'if(it.b){brandCounts[it.b]=(brandCounts[it.b]||0)+1;}' +
-      'if(it.c&&Array.isArray(it.c)){' +
-      'it.c.forEach(function(c){if(c){catCounts[c]=(catCounts[c]||0)+1;}});' +
-      '}else if(it.c&&typeof it.c==="string"&&it.c.trim()){' +
-      'catCounts[it.c.trim()]=(catCounts[it.c.trim()]||0)+1;' +
-      '}' +
       '});' +
       'var brands = Object.keys(brandCounts).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"});});' +
-      'var categories = Object.keys(catCounts).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"});});' +
       'var brandWrap = document.getElementById("brandSelectWrap");' +
       'var brandSel = document.getElementById("brandSelect");' +
       'if(brands.length > 0){' +
@@ -804,54 +796,6 @@
       'brandSel.appendChild(opt);' +
       '});' +
       '}' +
-      'var catWrap = document.getElementById("categorySelectWrap");' +
-      'var catBtn = document.getElementById("catDropdownBtn");' +
-      'var catBtnText = document.getElementById("catBtnText");' +
-      'var catPanel = document.getElementById("catDropdownPanel");' +
-      'var catListEl = document.getElementById("catCheckboxesList");' +
-      'var selAllBtn = document.getElementById("catSelectAllBtn");' +
-      'var clrAllBtn = document.getElementById("catClearAllBtn");' +
-      'var selectedCats = new Set(categories);' +
-      'catBtn.onclick = function(e){e.stopPropagation();catPanel.style.display=(catPanel.style.display==="flex"?"none":"flex");};' +
-      'catPanel.onclick = function(e){e.stopPropagation();};' +
-      'document.addEventListener("click",function(){catPanel.style.display="none";});' +
-      'function updateCatBtnLabel(){' +
-      'if(selectedCats.size===categories.length){catBtnText.textContent="All Categories ("+categories.length+")";}' +
-      'else if(selectedCats.size===0){catBtnText.textContent="None Selected";}' +
-      'else{catBtnText.textContent=selectedCats.size+" Categories";}' +
-      '}' +
-      'if(categories.length > 0){' +
-      'catWrap.style.display = "flex";' +
-      'categories.forEach(function(c){' +
-      'var lbl=document.createElement("label");' +
-      'lbl.style.cssText="display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:12px;color:#1e293b;user-select:none;";' +
-      'lbl.onmouseover=function(){lbl.style.background="#f1f5f9";};' +
-      'lbl.onmouseout=function(){lbl.style.background="none";};' +
-      'var cb=document.createElement("input");' +
-      'cb.type="checkbox";' +
-      'cb.value=c;' +
-      'cb.checked=true;' +
-      'cb.style.cssText="cursor:pointer;accent-color:#1a73e8;width:14px;height:14px;margin:0;";' +
-      'cb.onchange=function(){' +
-      'if(cb.checked){selectedCats.add(c);}else{selectedCats.delete(c);}' +
-      'updateCatBtnLabel();' +
-      'update();' +
-      '};' +
-      'var sp=document.createElement("span");' +
-      'sp.textContent=c+" ("+catCounts[c]+")";' +
-      'lbl.appendChild(cb);lbl.appendChild(sp);catListEl.appendChild(lbl);' +
-      '});' +
-      'updateCatBtnLabel();' +
-      '}' +
-      'selAllBtn.onclick=function(){' +
-      'catListEl.querySelectorAll("input[type=checkbox]").forEach(function(cb){cb.checked=true;selectedCats.add(cb.value);});' +
-      'updateCatBtnLabel();update();' +
-      '};' +
-      'clrAllBtn.onclick=function(){' +
-      'catListEl.querySelectorAll("input[type=checkbox]").forEach(function(cb){cb.checked=false;});' +
-      'selectedCats.clear();' +
-      'updateCatBtnLabel();update();' +
-      '};' +
       'function render(list){' +
       'var g=document.getElementById("grid");' +
       'var nr=document.getElementById("noResults");' +
@@ -859,12 +803,12 @@
       'nr.style.display="none";' +
       'g.innerHTML=list.map(function(e){' +
       'var st=esc(e.t);' +
-      'return "<a class=card href=\\"https://www.amazon.in/dp/"+esc(e.a)+"\\" target=_blank rel=noopener>"' +
+      'return "<a class=card href=\"https://www.amazon.in/dp/"+esc(e.a)+"\" target=_blank rel=noopener>"' +
       '+ "<div class=img-wrap>" + (e.d?"<div class=discount-badge><span class=disc-pct>"+e.d+"%</span><span class=disc-off>Off</span></div>":"")' +
-      '+ "<img src=\\""+esc(e.img)+"\\" loading=lazy onerror=\\"this.remove()\\"></div>"' +
+      '+ "<img src=\""+esc(e.img)+"\" loading=lazy onerror=\"this.remove()\"></div>"' +
       '+ "<div class=card-body>"' +
       '+ (e.b?"<div class=brand-name>"+esc(e.b)+"</div>":"")' +
-      '+ "<div class=title title=\\""+st+"\\">"+st+"</div>"' +
+      '+ "<div class=title title=\""+st+"\">"+st+"</div>"' +
       '+ (e.pz?"<div class=pack-size>"+esc(e.pz)+"</div>":"")' +
       '+ "<div class=price-wrap>"+(e.bp!==null?"<span class=price>₹"+e.bp+"</span>":"")+(e.lp&&e.lp!==e.bp?"<span class=mrp>₹"+e.lp+"</span>":"")+"</div></div></a>";' +
       '}).join("");' +
@@ -873,41 +817,33 @@
       'var q=(document.getElementById("searchInput").value||"").trim().toLowerCase();' +
       'var sm=document.getElementById("sortSelect").value;' +
       'var selBrand=brandSel.value;' +
-      'var TRINKET_RE = /\\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\\s*wicks?|batti|sambrani|gopuram|mangalam|holy|rakhi|rakshabandhan|rakhee|rakshasutra|lumba|raakhee|bracelet|bangle|finger\\s*rings?|earrings?|cufflinks?|keychains?|pendant|necklace|anklet)\\b/i;' +
-      'var hideTrinketsEl = document.getElementById("hideTrinketsCb");' +
-      'var hideTrinkets = hideTrinketsEl && hideTrinketsEl.checked;' +
+      'var selPrice=document.getElementById("priceSelect").value;' +
       'var list=rawItems.filter(function(it){' +
       'if(q && (!it.t || it.t.toLowerCase().indexOf(q)===-1) && (!it.b || it.b.toLowerCase().indexOf(q)===-1)) return false;' +
       'if(selBrand && it.b!==selBrand) return false;' +
-      'if(hideTrinkets && (it.bp === null || it.bp > 15)){' +
-      'var isTrinket = (it.c && it.c.indexOf("Pooja & Religious Needs") !== -1) || TRINKET_RE.test(it.t || "");' +
-      'if(isTrinket) return false;' +
-      '}' +
-      'if(selectedCats.size < categories.length){' +
-      'if(selectedCats.size === 0) return false;' +
-      'var matched = false;' +
-      'if(it.c && Array.isArray(it.c)){' +
-      'for(var k=0; k<it.c.length; k++){' +
-      'if(selectedCats.has(it.c[k])){matched=true;break;}' +
-      '}' +
-      '}else if(it.c && selectedCats.has(it.c)){matched=true;}' +
-      'if(!matched) return false;' +
+      'if(selPrice){' +
+      'if(it.bp===null||it.bp===undefined) return false;' +
+      'if(selPrice==="0-50") return it.bp<=50;' +
+      'if(selPrice==="50-100") return it.bp>50 && it.bp<=100;' +
+      'if(selPrice==="100-200") return it.bp>100 && it.bp<=200;' +
+      'if(selPrice==="200-500") return it.bp>200 && it.bp<=500;' +
+      'if(selPrice==="500+") return it.bp>500;' +
       '}' +
       'return true;' +
       '});' +
       'if(sm==="discount-desc"){list.sort(function(a,b){return b.d-a.d});}' +
       'else if(sm==="price-asc"){list.sort(function(a,b){return ((a.bp===null||a.bp===undefined)?1e9:a.bp)-((b.bp===null||b.bp===undefined)?1e9:b.bp);});}' +
       'else if(sm==="price-desc"){list.sort(function(a,b){return ((b.bp===null||b.bp===undefined)?-1:b.bp)-((a.bp===null||a.bp===undefined)?-1:a.bp);});}' +
+      'else if(sm==="title-asc"){list.sort(function(a,b){return (a.t||"").localeCompare(b.t||"");});}' +
       'render(list);' +
       'var cb=document.getElementById("countBadge");' +
-      'var isFiltered=q||selBrand||(selectedCats.size<categories.length);' +
+      'var isFiltered=q||selBrand||selPrice;' +
       'cb.textContent=isFiltered ? (list.length+" of "+rawItems.length+" items") : (list.length+" items");' +
       '}' +
       'document.getElementById("searchInput").addEventListener("input",update);' +
       'document.getElementById("sortSelect").addEventListener("change",update);' +
+      'document.getElementById("priceSelect").addEventListener("change",update);' +
       'brandSel.addEventListener("change",update);' +
-      'var htCb = document.getElementById("hideTrinketsCb");' +
-      'if (htCb) htCb.addEventListener("change", update);' +
       'update();' +
       '<\/script></body></html>';
 
@@ -959,7 +895,13 @@
     b.onclick = function () {
       selectedMinDiscount = pObj.pct;
       selectedDiscountNode = pObj.node;
+      if (selectedMinDiscount === 70) {
+        selectedPriceFacets = ['0-5000', '5000-10000'];
+      } else {
+        selectedPriceFacets = ['0-5000'];
+      }
       updateDiscountPillsUI();
+      updatePricePillsUI();
       updateCategoryUI();
     };
     pillButtons.push(b);
@@ -968,6 +910,63 @@
   discSec.appendChild(pillRow);
   panel.appendChild(discSec);
 
+  // Section 0.2: Price Range Filter Pills
+  var priceSec = document.createElement('div');
+  priceSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
+  priceSec.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+      '<span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Price Range Filter</span>' +
+      '<span id="__aznowPriceHint" style="font-size:10px;font-weight:600;color:#2563eb;">Choose up to 2</span>' +
+    '</div>';
+  var priceRow = document.createElement('div');
+  priceRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;';
+  var pricePillButtons = [];
+
+  var priceRangeData = [
+    { label: 'Under ₹50', facet: '0-5000' },
+    { label: '₹50–₹100', facet: '5000-10000' },
+    { label: '₹100–₹200', facet: '10000-20000' },
+    { label: '₹200–₹500', facet: '20000-50000' },
+    { label: 'Above ₹500', facet: '50000-' }
+  ];
+  var selectedPriceFacets = ['0-5000', '5000-10000'];
+
+  function handlePricePillClick(facet) {
+    if (selectedMinDiscount === 70) {
+      var idx = selectedPriceFacets.indexOf(facet);
+      if (idx !== -1) {
+        if (selectedPriceFacets.length > 1) {
+          selectedPriceFacets.splice(idx, 1);
+        }
+      } else {
+        if (selectedPriceFacets.length < 2) {
+          selectedPriceFacets.push(facet);
+        } else {
+          selectedPriceFacets.shift();
+          selectedPriceFacets.push(facet);
+        }
+      }
+    } else {
+      selectedPriceFacets = [facet];
+    }
+    updatePricePillsUI();
+  }
+
+  priceRangeData.forEach(function (pObj) {
+    var b = document.createElement('button');
+    b.textContent = pObj.label;
+    b.__facet = pObj.facet;
+    b.style.cssText =
+      'flex:1 1 calc(33.333% - 5px);min-width:85px;padding:6px 2px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid #cbd5e1;transition:all .12s;touch-action:manipulation;text-align:center;box-sizing:border-box;';
+    b.onclick = function () {
+      handlePricePillClick(pObj.facet);
+    };
+    pricePillButtons.push(b);
+    priceRow.appendChild(b);
+  });
+  priceSec.appendChild(priceRow);
+  panel.appendChild(priceSec);
+
   // Section 0.5: Global Deals Fetch Button
   var globalBtn = document.createElement('button');
   globalBtn.style.cssText =
@@ -975,6 +974,28 @@
   panel.appendChild(globalBtn);
 
   var quickKwHdr = null;
+  function updatePricePillsUI() {
+    var hintEl = document.getElementById('__aznowPriceHint');
+    if (hintEl) {
+      hintEl.textContent = selectedMinDiscount === 70 ? 'Choose up to 2' : 'Choose 1';
+    }
+    pricePillButtons.forEach(function (b) {
+      var active = selectedPriceFacets.indexOf(b.__facet) !== -1;
+      b.style.background = active ? '#058552' : '#f8fafc';
+      b.style.color = active ? '#ffffff' : '#334155';
+      b.style.borderColor = active ? '#046c42' : '#cbd5e1';
+    });
+
+    var labels = selectedPriceFacets.map(function (f) {
+      for (var k = 0; k < priceRangeData.length; k++) {
+        if (priceRangeData[k].facet === f) return priceRangeData[k].label;
+      }
+      return f;
+    }).join(', ');
+
+    globalBtn.textContent = '🔥 Fetch Deals (' + selectedMinDiscount + '%+ Off | ' + labels + ')';
+  }
+
   function updateDiscountPillsUI() {
     pillButtons.forEach(function (b) {
       var active = b.__pct === selectedMinDiscount;
@@ -982,10 +1003,10 @@
       b.style.color = active ? '#ffffff' : '#334155';
       b.style.borderColor = active ? '#046c42' : '#cbd5e1';
     });
-    globalBtn.textContent = '🔥 Fetch All Store Deals (' + selectedMinDiscount + '%+ Off)';
     if (quickKwHdr) {
       quickKwHdr.textContent = '⚡ Quick Keywords (' + selectedMinDiscount + '%+ Off)';
     }
+    updatePricePillsUI();
   }
   updateDiscountPillsUI();
 
@@ -1228,7 +1249,7 @@
       }
     });
 
-    selCount.textContent = selectedCategories.length + ' / 3';
+    selCount.textContent = selectedCategories.length + ' selected';
     clearBtn.style.display = selectedCategories.length > 0 ? 'inline' : 'none';
 
     if (selectedCategories.length === 0) {
@@ -1238,7 +1259,7 @@
       fetchCatBtn.style.color = '#94a3b8';
       fetchCatBtn.style.cursor = 'not-allowed';
       fetchCatBtn.style.boxShadow = 'none';
-      fetchCatBtn.textContent = 'Select up to 3 subcategories';
+      fetchCatBtn.textContent = 'Select subcategories to fetch';
     } else {
       fetchCatBtn.disabled = false;
       fetchCatBtn.style.background = '#ffd814';
@@ -1247,11 +1268,9 @@
       fetchCatBtn.style.cursor = 'pointer';
       fetchCatBtn.style.boxShadow = '0 2px 6px rgba(252,210,0,0.35)';
       fetchCatBtn.textContent =
-        'Fetch ' +
+        '🔥 Fetch ' +
         selectedCategories.length +
-        ' Subcat (' +
-        selectedMinDiscount +
-        '%+ Off) →';
+        ' Subcategories →';
     }
   }
 
@@ -1309,6 +1328,36 @@
     };
     categoryCards.push(cardObj);
 
+    var catActionsRow = document.createElement('div');
+    catActionsRow.style.cssText =
+      'display:flex;justify-content:space-between;align-items:center;padding:4px 2px 6px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;';
+    catActionsRow.innerHTML =
+      '<span style="font-size:11px;color:#64748b;font-weight:600;">' + catGroup.subs.length + ' Subcategories</span>' +
+      '<div style="display:flex;gap:8px;font-size:11px;">' +
+        '<button type="button" class="__azSelAll" style="background:none;border:none;color:#2563eb;font-weight:700;cursor:pointer;padding:0;">Select All</button>' +
+        '<span style="color:#cbd5e1">|</span>' +
+        '<button type="button" class="__azClearAll" style="background:none;border:none;color:#ef4444;font-weight:600;cursor:pointer;padding:0;">Clear</button>' +
+      '</div>';
+    subsContainer.appendChild(catActionsRow);
+
+    catActionsRow.querySelector('.__azSelAll').onclick = function () {
+      catGroup.subs.forEach(function (sub) {
+        var subName = sub[0];
+        var subNode = sub[1];
+        if (!selectedCategories.some(function (it) { return it.nodeId === subNode; })) {
+          selectedCategories.push({ name: subName, nodeId: subNode, parentCat: catGroup.name });
+        }
+      });
+      updateCategoryUI();
+    };
+
+    catActionsRow.querySelector('.__azClearAll').onclick = function () {
+      selectedCategories = selectedCategories.filter(function (it) {
+        return it.parentCat !== catGroup.name;
+      });
+      updateCategoryUI();
+    };
+
     catHeader.onclick = function () {
       var isOpen = subsContainer.style.display === 'flex';
       if (isOpen) {
@@ -1354,10 +1403,6 @@
         if (idx >= 0) {
           selectedCategories.splice(idx, 1);
         } else {
-          if (selectedCategories.length >= 3) {
-            alert('Maximum 3 subcategories allowed per fetch.');
-            return;
-          }
           selectedCategories.push({ name: subName, nodeId: subNode, parentCat: catGroup.name });
         }
         updateCategoryUI();
@@ -1394,6 +1439,11 @@
       b.style.opacity = disabled ? '0.6' : '1';
     });
 
+    pricePillButtons.forEach(function (b) {
+      b.disabled = disabled;
+      b.style.opacity = disabled ? '0.6' : '1';
+    });
+
     if (typeof quickKwButtons !== 'undefined' && Array.isArray(quickKwButtons)) {
       quickKwButtons.forEach(function (btn) {
         btn.disabled = disabled;
@@ -1411,67 +1461,75 @@
     });
   }
 
-  // 1. Global Store Fetch Handler (/s?i=amazontez with p_36 price brackets)
+  // 1. Global Store Fetch Handler (/s?i=amazontez with dynamic selected price brackets)
   globalBtn.onclick = async function () {
-    var targetTab = createLoadingTab('Loading Global Deals...');
+    var labels = selectedPriceFacets.map(function (f) {
+      for (var k = 0; k < priceRangeData.length; k++) {
+        if (priceRangeData[k].facet === f) return priceRangeData[k].label;
+      }
+      return f;
+    }).join(' & ');
+
+    var targetTab = createLoadingTab('Loading Deals: ' + labels + ' (' + selectedMinDiscount + '%+ Off)...');
     setAllControlsDisabled(true);
     try {
       var seenAsins = {};
       var items = [];
-      var priceBrackets = [
-        { label: 'Under ₹50', facet: '0-5000' },
-        { label: '₹50–₹100', facet: '5000-10000' },
-        { label: '₹100–₹200', facet: '10000-20000' },
-        { label: '₹200–₹500', facet: '20000-50000' },
-        { label: '₹500+', facet: '50000-' }
-      ];
-      var PAGES_PER_BRACKET = 2;
 
-      for (var bIdx = 0; bIdx < priceBrackets.length; bIdx++) {
-        var bracket = priceBrackets[bIdx];
-        var pages = [];
-        for (var p = 1; p <= PAGES_PER_BRACKET; p++) {
-          pages.push(p);
+      for (var bIdx = 0; bIdx < selectedPriceFacets.length; bIdx++) {
+        var facet = selectedPriceFacets[bIdx];
+        var facetLabel = '';
+        for (var k = 0; k < priceRangeData.length; k++) {
+          if (priceRangeData[k].facet === facet) {
+            facetLabel = priceRangeData[k].label;
+            break;
+          }
         }
 
-        globalBtn.textContent =
-          '(' + (bIdx + 1) + '/' + priceBrackets.length + ') ' + bracket.label + ' (' + items.length + ' found)...';
+        var MAX_PAGES_THIS_BRACKET = 10;
+        var page = 1;
 
-        var results = await Promise.all(
-          pages.map(function (pageNo) {
-            return fetch(buildGlobalSearchUrl(selectedDiscountNode, pageNo, bracket.facet), {
-              credentials: 'include'
-            })
-              .then(function (r) {
-                return r.ok ? r.text() : '';
-              })
-              .catch(function () {
-                return '';
-              });
-          })
-        );
+        while (page <= MAX_PAGES_THIS_BRACKET) {
+          globalBtn.textContent =
+            '(' + (bIdx + 1) + '/' + selectedPriceFacets.length + ') ' + facetLabel + ' P.' + page + ' (' + items.length + ' found)...';
 
-        for (var rIdx = 0; rIdx < results.length; rIdx++) {
-          var html = results[rIdx];
-          if (!html) continue;
+          var html = '';
+          try {
+            var r = await fetch(buildGlobalSearchUrl(selectedDiscountNode, page, facet), { credentials: 'include' });
+            if (r.ok) html = await r.text();
+          } catch (e) {}
+
+          if (!html) break;
           var parsedPage = parseHtmlSearchPage(html);
-          if (parsedPage.totalCards === 0) continue;
+          if (parsedPage.totalCards === 0) break;
 
+          var addedOnPage = 0;
           for (var j = 0; j < parsedPage.items.length; j++) {
             var prod = parsedPage.items[j];
             if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
               seenAsins[prod.a] = 1;
               items.push(prod);
+              addedOnPage++;
             }
           }
+
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          var nextLink = doc.querySelector('a[href*="page=' + (page + 1) + '"], .s-pagination-next:not(.s-pagination-disabled)');
+          var isLast = !nextLink || addedOnPage === 0;
+
+          if (isLast) break;
+
+          page++;
+          await sleep(250);
         }
         await sleep(200);
       }
 
-      openResultsTab('Amazon Now Global (' + selectedMinDiscount + '%+ Off)', items, targetTab);
+      openResultsTab('Amazon Now (' + selectedMinDiscount + '%+ Off | ' + labels + ')', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
       updateDiscountPillsUI();
+      updatePricePillsUI();
       updateCategoryUI();
     }
   };
@@ -1496,8 +1554,9 @@
       var BATCH_SIZE = 2;
       var emptyStreak = 0;
 
-      // Always fetch unfiltered Page 1 to ensure all Page 1 items (even below min discount) are captured
+      // 1. Fetch unfiltered Page 1 to ensure all Page 1 items are captured
       kwBtn.textContent = 'Scanning P1...';
+      var p1DealsCount = 0;
       try {
         var p1Html = await fetch(buildKeywordRawSearchUrl(kw, 1), {
           credentials: 'include'
@@ -1513,73 +1572,80 @@
           var p1Parsed = parseHtmlSearchPage(p1Html);
           for (var i = 0; i < p1Parsed.items.length; i++) {
             var p1Prod = p1Parsed.items[i];
-            if (p1Prod.d >= selectedMinDiscount && !seenAsins[p1Prod.a]) {
+            if (!seenAsins[p1Prod.a]) {
               seenAsins[p1Prod.a] = 1;
-              items.push(p1Prod);
+              items.push(p1Prod); // Always display all Page 1 products!
+            }
+            if (p1Prod.d >= selectedMinDiscount) {
+              p1DealsCount++;
             }
           }
         }
       } catch (e) {}
 
-      while (page <= MAX_PAGES) {
-        var batchPages = [];
-        for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
-          batchPages.push(page + b);
-        }
+      // 2. Fetch Page 2+ ONLY if Page 1 has at least 3 items with >= min discount
+      if (p1DealsCount >= 3) {
+        var page = 2;
+        while (page <= MAX_PAGES) {
+          var batchPages = [];
+          for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
+            batchPages.push(page + b);
+          }
 
-        kwBtn.textContent = 'P' + batchPages.join(', P') + ' (' + items.length + ')';
+          kwBtn.textContent = 'P' + batchPages.join(', P') + ' (' + items.length + ')';
 
-        var results = await Promise.all(
-          batchPages.map(function (p) {
-            return fetch(buildKeywordSearchUrl(kw, selectedDiscountNode, p), {
-              credentials: 'include'
-            })
-              .then(function (r) {
-                return r.ok ? r.text() : '';
+          var results = await Promise.all(
+            batchPages.map(function (p) {
+              return fetch(buildKeywordSearchUrl(kw, selectedDiscountNode, p), {
+                credentials: 'include'
               })
-              .catch(function () {
-                return '';
-              });
-          })
-        );
+                .then(function (r) {
+                  return r.ok ? r.text() : '';
+                })
+                .catch(function () {
+                  return '';
+                });
+            })
+          );
 
-        var stopLoop = false;
-        for (var i = 0; i < results.length; i++) {
-          var html = results[i];
-          if (!html) {
-            stopLoop = true;
-            break;
-          }
-          var parsedPage = parseHtmlSearchPage(html);
-          if (parsedPage.totalCards === 0) {
-            stopLoop = true;
-            break;
-          }
-
-          var addedOnPage = 0;
-          for (var j = 0; j < parsedPage.items.length; j++) {
-            var prod = parsedPage.items[j];
-            if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
-              seenAsins[prod.a] = 1;
-              items.push(prod);
-              addedOnPage++;
-            }
-          }
-
-          if (addedOnPage === 0) {
-            emptyStreak++;
-            if (emptyStreak >= 3) {
+          var stopLoop = false;
+          for (var i = 0; i < results.length; i++) {
+            var html = results[i];
+            if (!html) {
               stopLoop = true;
               break;
             }
-          } else {
-            emptyStreak = 0;
-          }
-        }
+            var parsedPage = parseHtmlSearchPage(html);
+            if (parsedPage.totalCards === 0) {
+              stopLoop = true;
+              break;
+            }
 
-        if (stopLoop) break;
-        page += batchPages.length;
-        await sleep(250);
+            var addedOnPage = 0;
+            for (var j = 0; j < parsedPage.items.length; j++) {
+              var prod = parsedPage.items[j];
+              if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
+                seenAsins[prod.a] = 1;
+                items.push(prod);
+                addedOnPage++;
+              }
+            }
+
+            if (addedOnPage === 0) {
+              emptyStreak++;
+              if (emptyStreak >= 2) {
+                stopLoop = true;
+                break;
+              }
+            } else {
+              emptyStreak = 0;
+            }
+          }
+
+          if (stopLoop) break;
+          page += batchPages.length;
+          await sleep(250);
+        }
       }
 
       openResultsTab('Search: "' + kw + '" (' + selectedMinDiscount + '%+ Off)', items, targetTab);
@@ -1620,141 +1686,104 @@
         })
         .join(' & ');
 
-      var BATCH_SIZE = 2;
-
       for (var cIdx = 0; cIdx < selectedCategories.length; cIdx++) {
         var curCat = selectedCategories[cIdx];
-        var offset = 0;
-        var hasMore = true;
-        var rateLimitCount = 0;
+        fetchCatBtn.textContent =
+          '(' + (cIdx + 1) + '/' + selectedCategories.length + ') ' + curCat.name + ' P1 (' + items.length + ')';
 
-        while (hasMore && offset < 30) {
-          var batchOffsets = [];
-          for (var b = 0; b < BATCH_SIZE && offset + b < 30; b++) {
-            batchOffsets.push(offset + b);
-          }
-          var pageLabels = batchOffsets
-            .map(function (o) {
-              return 'P' + (o + 1);
-            })
-            .join(', ');
-          fetchCatBtn.textContent =
-            '(' +
-            (cIdx + 1) +
-            '/' +
-            selectedCategories.length +
-            ') ' +
-            curCat.name +
-            ' ' +
-            pageLabels +
-            ' (' +
-            items.length +
-            ')';
+        // 1. Fetch Page 1 (offset 0)
+        var p1Json = null;
+        try {
+          var p1Res = await fetch(buildCategoryUrl(curCat.nodeId, 0), { credentials: 'include' });
+          if (p1Res.ok) p1Json = await p1Res.json();
+        } catch (e) {}
 
-          try {
-            var promises = batchOffsets.map(function (curOffset) {
-              return fetch(buildCategoryUrl(curCat.nodeId, curOffset), {
-                credentials: 'include'
-              })
-                .then(function (res) {
-                  if (res.status === 429) {
-                    return { status: 429, offset: curOffset };
-                  }
-                  if (!res.ok) {
-                    return { status: res.status, error: 'HTTP ' + res.status, offset: curOffset };
-                  }
-                  return res.json().then(function (json) {
-                    return { status: 200, json: json, offset: curOffset };
-                  });
-                })
-                .catch(function (err) {
-                  return { error: err, offset: curOffset };
-                });
-            });
+        if (!p1Json || !p1Json.data) continue;
 
-            var results = await Promise.all(promises);
+        var p1Data = p1Json.data;
+        var p1Widgets = p1Data.widgets || [];
+        var p1DealsCount = 0;
 
-            var has429 = results.some(function (r) {
-              return r && r.status === 429;
-            });
-            if (has429) {
-              if (++rateLimitCount > 3) {
-                hasMore = false;
-                break;
-              }
-              await sleep(4000 * rateLimitCount);
-              continue;
-            }
-            rateLimitCount = 0;
-
-            var batchHadItems = false;
-            var shouldStop = false;
-            var latestNextOffset = null;
-
-            for (var rIdx = 0; rIdx < results.length; rIdx++) {
-              var resObj = results[rIdx];
-              if (!resObj || resObj.error || !resObj.json || !resObj.json.data) {
-                shouldStop = true;
-                break;
-              }
-
-              var data = resObj.json.data;
-              var widgets = data.widgets || [];
-              var pageCount = 0;
-
-              for (var w = 0; w < widgets.length; w++) {
-                var prods = (widgets[w].data && widgets[w].data.products) || [];
-                pageCount += prods.length;
-
-                for (var p = 0; p < prods.length; p++) {
-                  var prod = parseProduct(prods[p], curCat.name);
-                  if (prod && prod.a && prod.d >= selectedMinDiscount) {
-                    if (!seenAsins[prod.a]) {
-                      seenAsins[prod.a] = prod;
-                      items.push(prod);
-                    } else {
-                      var existing = seenAsins[prod.a];
-                      if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
-                        existing.c.push(curCat.name);
-                      }
-                    }
-                  }
+        for (var w = 0; w < p1Widgets.length; w++) {
+          var prods = (p1Widgets[w].data && p1Widgets[w].data.products) || [];
+          for (var p = 0; p < prods.length; p++) {
+            var prod = parseProduct(prods[p], curCat.name);
+            if (prod && prod.a) {
+              // Always display all Page 1 products!
+              if (!seenAsins[prod.a]) {
+                seenAsins[prod.a] = prod;
+                items.push(prod);
+              } else {
+                var existing = seenAsins[prod.a];
+                if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
+                  existing.c.push(curCat.name);
                 }
               }
-
-              if (pageCount === 0) {
-                shouldStop = true;
-                break;
-              }
-
-              batchHadItems = true;
-
-              var meta = data.metadata || {};
-              if (typeof meta.nextOffset === 'number' && meta.nextOffset > offset) {
-                latestNextOffset = meta.nextOffset;
-              }
-              var more = meta.hasMoreWidgets !== undefined ? !!meta.hasMoreWidgets : true;
-              if (!more) {
-                shouldStop = true;
-                break;
+              if (prod.d >= 50) {
+                p1DealsCount++;
               }
             }
-
-            if (shouldStop || !batchHadItems) {
-              hasMore = false;
-              break;
-            }
-
-            if (latestNextOffset !== null && latestNextOffset > offset) {
-              offset = latestNextOffset;
-            } else {
-              offset += batchOffsets.length;
-            }
-            await sleep(600);
-          } catch (err) {
-            hasMore = false;
           }
         }
+
+        var p1Meta = p1Data.metadata || {};
+        var hasMoreP1 = p1Meta.hasMoreWidgets !== false;
+
+        // 2. Fetch Page 2+ (offset 1+) ONLY if Page 1 has at least 3 items with >=50% off
+        if (p1DealsCount >= 3 && hasMoreP1) {
+          var offset = typeof p1Meta.nextOffset === 'number' && p1Meta.nextOffset > 0 ? p1Meta.nextOffset : 1;
+          var MAX_CAT_PAGES = 6;
+          var hasMore = true;
+
+          while (hasMore && offset < MAX_CAT_PAGES) {
+            fetchCatBtn.textContent =
+              '(' + (cIdx + 1) + '/' + selectedCategories.length + ') ' + curCat.name + ' P' + (offset + 1) + ' (' + items.length + ')';
+
+            var json = null;
+            try {
+              var res = await fetch(buildCategoryUrl(curCat.nodeId, offset), { credentials: 'include' });
+              if (res.ok) json = await res.json();
+            } catch (e) {}
+
+            if (!json || !json.data) break;
+
+            var data = json.data;
+            var widgets = data.widgets || [];
+            var prodsCount = 0;
+
+            for (var w = 0; w < widgets.length; w++) {
+              var prods = (widgets[w].data && widgets[w].data.products) || [];
+              for (var p = 0; p < prods.length; p++) {
+                var prod = parseProduct(prods[p], curCat.name);
+                if (prod && prod.a && prod.d >= 50) {
+                  if (!seenAsins[prod.a]) {
+                    seenAsins[prod.a] = prod;
+                    items.push(prod);
+                  } else {
+                    var existing = seenAsins[prod.a];
+                    if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
+                      existing.c.push(curCat.name);
+                    }
+                  }
+                  prodsCount++;
+                }
+              }
+            }
+
+            var meta = data.metadata || {};
+            if (meta.hasMoreWidgets === false || prodsCount === 0) break;
+
+            if (typeof meta.nextOffset === 'number' && meta.nextOffset > offset) {
+              offset = meta.nextOffset;
+            } else {
+              offset++;
+            }
+
+            await sleep(250);
+          }
+        }
+
+        await sleep(150);
       }
 
       openResultsTab(catNames + ' (' + selectedMinDiscount + '%+ Off)', items, targetTab);
