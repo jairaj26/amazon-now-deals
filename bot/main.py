@@ -32,8 +32,9 @@ def load_cache(cache_path):
     return {}
 
 def save_cache(cache, cache_path):
-    """Saves posted deals state to cache, pruning records not seen in over 30 days."""
-    os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
+    """Saves posted deals state to cache atomically, pruning records not seen in over 30 days."""
+    cache_dir = os.path.dirname(os.path.abspath(cache_path))
+    os.makedirs(cache_dir, exist_ok=True)
     now = time.time()
     retention_period = 30 * DAY_SECONDS
 
@@ -43,8 +44,10 @@ def save_cache(cache, cache_path):
         if now - last_seen < retention_period:
             pruned[key] = record
 
-    with open(cache_path, "w", encoding="utf-8") as f:
+    tmp_path = f"{cache_path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(pruned, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, cache_path)
 
 def main():
     parser = argparse.ArgumentParser(description="Amazon Now (Tez) Deals Scraper & Telegram Bot")
@@ -114,7 +117,15 @@ def main():
             deals_to_alert.append((deal, trigger))
         else:
             # Case 2: Same Discount as Previous Run
+            last_seen = cached.get("last_seen_ts", 0.0)
             cached["last_seen_ts"] = now
+
+            # If item was absent from catalog for > 6 hours, treat its return as a restock
+            if last_seen > 0 and (now - last_seen > 6 * 3600):
+                cached["streak_start_ts"] = now
+                if now >= cached.get("hidden_until_ts", 0.0) and now >= cached.get("muted_until_ts", 0.0):
+                    deals_to_alert.append((deal, "RESTOCKED"))
+                    continue
 
             # Rule A: Check active 7-day mute
             if now < cached.get("muted_until_ts", 0.0):
@@ -126,17 +137,20 @@ def main():
                 deals_to_alert.append((deal, "MUTE_EXPIRED (7-Day Re-alert)"))
 
             # Rule C: Check if item remained at this exact discount for 1 full day (24h)
-            elif (now - cached.get("streak_start_ts", now)) >= DAY_SECONDS:
-                cached["muted_until_ts"] = now + WEEK_SECONDS
-                suppressed_count += 1
-                continue
-
-            # Rule D: Within the same-day 24-hour hide window
-            elif now < cached.get("hidden_until_ts", 0.0):
-                suppressed_count += 1
-                continue
             else:
-                suppressed_count += 1
+                streak_start = cached.get("streak_start_ts") or cached.get("last_posted_ts") or cached.get("timestamp") or now
+                cached["streak_start_ts"] = streak_start
+
+                if (now - streak_start) >= DAY_SECONDS:
+                    cached["muted_until_ts"] = now + WEEK_SECONDS
+                    suppressed_count += 1
+                    continue
+                # Rule D: Within the same-day 24-hour hide window
+                elif now < cached.get("hidden_until_ts", 0.0):
+                    suppressed_count += 1
+                    continue
+                else:
+                    suppressed_count += 1
 
     if pooja_filtered_count > 0:
         print(f"[*] Filtered out {pooja_filtered_count} Trinket/Rakhi/Pooja items with price > ₹{config.TRINKET_MAX_PRICE} (EXCLUDE_POOJA=True)")
@@ -173,7 +187,7 @@ def main():
                 }
                 posted_count += 1
         else:
-            successful_asins = notifier.send_deals_batch(deals_list, min_discount=args.min_discount)
+            successful_asins = notifier.send_deals_batch(deals_list)
             success_set = set(successful_asins)
             for deal in deals_list:
                 asin = deal["asin"]

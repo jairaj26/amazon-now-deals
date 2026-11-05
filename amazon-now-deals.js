@@ -3,7 +3,7 @@
  *
  * Features:
  * - Global Deals Fetcher: Fetches all items across Amazon Now using server-side discount filters (/s?i=amazontez&srs=100147972031)
- * - Sidebar Discount Pills: 10%, 25%, 35%, 50%, 60%, 70% off (Defaults to 60% off)
+ * - Sidebar Discount Pills: 50%, 60%, 70% off (Defaults to 50% off)
  * - Keyword Search API fetcher: Search any keyword via Tez JSON API and filter by chosen discount
  * - Multi-Category Selection: Select up to 3 subcategories per fetch
  * - Zero hardcoded location/headers: Dynamically detects brandId and uses active session cookies
@@ -15,6 +15,35 @@
   'use strict';
 
   // Helper: Sleep / delay for rate limiting
+  function esc(s) {
+    return (s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function parsePrice(str) {
+    if (!str) return null;
+    var m = String(str).match(/\d+(?:,\d+)*(?:\.\d+)?/);
+    if (!m) return null;
+    var val = parseFloat(m[0].replace(/,/g, ''));
+    return isNaN(val) ? null : val;
+  }
+
+  function createLoadingTab(title) {
+    var tab = window.open('', '_blank');
+    if (tab) {
+      try {
+        tab.document.open();
+        tab.document.write('<!DOCTYPE html><html><head><title>' + esc(title || 'Loading Deals...') + '</title><meta charset=utf-8><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f4f6f8;color:#333;}.box{text-align:center;padding:24px 32px;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);max-width:360px;}.spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#058552;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div class=box><div class=spinner></div><h3 style="margin-bottom:8px">Scanning Amazon Now deals...</h3><p style="font-size:13px;color:#666">Please wait while deals are collected.</p></div></body></html>');
+        tab.document.close();
+      } catch (e) {}
+    }
+    return tab;
+  }
+
   function sleep(ms) {
     return new Promise(function (resolve) {
       setTimeout(resolve, ms);
@@ -86,21 +115,18 @@
 
   // Amazon India Discount Refinement Node Map (rnid: 2665398031)
   var discountPillsData = [
-    { pct: 10, node: '2665399031', label: '10%' },
-    { pct: 25, node: '2665400031', label: '25%' },
-    { pct: 35, node: '2665402031', label: '35%' },
     { pct: 50, node: '2665401031', label: '50%' },
     { pct: 60, node: '27060456031', label: '60%' },
     { pct: 70, node: '27060457031', label: '70%' }
   ];
 
-  var selectedMinDiscount = 60; // Default to 60% off
-  var selectedDiscountNode = '27060456031';
+  var selectedMinDiscount = 50;
+  var selectedDiscountNode = '2665401031';
   var TEZ_SRS_NODE = '100147972031';
 
   // Mapping of category nodes requiring merch endpoint vs category endpoint
   var merchMap = {
-    216450600031: 1 // Ice Cream Store
+    216450600031: 1
   };
 
   // Structured Categories & Subcategories
@@ -278,22 +304,31 @@
   ];
 
   // URL builders
-  function buildGlobalSearchUrl(discNodeId, page) {
+  function buildGlobalSearchUrl(discNodeId, page, priceFacet, sortMode) {
+    var rh = 'n%3A' + TEZ_SRS_NODE + '%2Cp_n_pct-off-with-tax%3A' + discNodeId;
+    if (priceFacet) {
+      rh += '%2Cp_36%3A' + priceFacet;
+    }
+    var sParam = sortMode || 'pct-off-with-tax';
+    var almParam = brandId ? '&almBrandId=' + encodeURIComponent(brandId) : '';
     return (
       'https://www.amazon.in/s?i=amazontez&srs=' +
       TEZ_SRS_NODE +
       '&bbn=' +
       TEZ_SRS_NODE +
-      '&rh=n%3A' +
-      TEZ_SRS_NODE +
-      '%2Cp_n_pct-off-with-tax%3A' +
-      discNodeId +
-      '&s=pct-off-with-tax&dc&page=' +
+      '&rh=' +
+      rh +
+      '&s=' +
+      sParam +
+      almParam +
+      '&dc&page=' +
       page
     );
   }
 
-  function buildKeywordSearchUrl(keyword, discNodeId, page) {
+  function buildKeywordSearchUrl(keyword, discNodeId, page, sortMode) {
+    var sParam = sortMode || 'pct-off-with-tax';
+    var almParam = brandId ? '&almBrandId=' + encodeURIComponent(brandId) : '';
     return (
       'https://www.amazon.in/s?i=amazontez&srs=' +
       TEZ_SRS_NODE +
@@ -305,7 +340,30 @@
       TEZ_SRS_NODE +
       '%2Cp_n_pct-off-with-tax%3A' +
       discNodeId +
-      '&s=pct-off-with-tax&dc&page=' +
+      '&s=' +
+      sParam +
+      almParam +
+      '&dc&page=' +
+      page
+    );
+  }
+
+  function buildKeywordRawSearchUrl(keyword, page, sortMode) {
+    var sParam = sortMode || 'relevanceblender';
+    var almParam = brandId ? '&almBrandId=' + encodeURIComponent(brandId) : '';
+    return (
+      'https://www.amazon.in/s?i=amazontez&srs=' +
+      TEZ_SRS_NODE +
+      '&bbn=' +
+      TEZ_SRS_NODE +
+      '&k=' +
+      encodeURIComponent(keyword) +
+      '&rh=n%3A' +
+      TEZ_SRS_NODE +
+      '&s=' +
+      sParam +
+      almParam +
+      '&dc&page=' +
       page
     );
   }
@@ -321,18 +379,6 @@
       brandId +
       '&offset=' +
       offset
-    );
-  }
-
-  function buildSearchUrl(keyword, offset) {
-    return (
-      'https://www.amazon.in/tez/browse/searchByKeyword?keyword=' +
-      encodeURIComponent(keyword) +
-      '&brandId=' +
-      brandId +
-      '&offset=' +
-      offset +
-      '&spellCorrectionDisabled=false'
     );
   }
 
@@ -593,17 +639,17 @@
       if (offerEl) {
         var bpAttr = offerEl.getAttribute('data-csa-c-price-to-pay');
         var lpAttr = offerEl.getAttribute('data-csa-c-strike-through-price');
-        if (bpAttr) bp = parseFloat(bpAttr);
-        if (lpAttr) lp = parseFloat(lpAttr);
+        bp = parsePrice(bpAttr);
+        lp = parsePrice(lpAttr);
       }
 
       if (bp === null || isNaN(bp)) {
         var priceTextEl = card.querySelector('.a-price:not([data-a-strike]) .a-offscreen');
-        if (priceTextEl) bp = parseFloat(priceTextEl.textContent.replace(/[^\d.]/g, ''));
+        if (priceTextEl) bp = parsePrice(priceTextEl.textContent);
       }
       if (lp === null || isNaN(lp)) {
         var mrpTextEl = card.querySelector('.a-price[data-a-strike] .a-offscreen');
-        if (mrpTextEl) lp = parseFloat(mrpTextEl.textContent.replace(/[^\d.]/g, ''));
+        if (mrpTextEl) lp = parsePrice(mrpTextEl.textContent);
       }
 
       if (bp === null || isNaN(bp)) continue;
@@ -642,16 +688,17 @@
   }
 
   // Open Results Tab with Full Grid & Filtering
-  function openResultsTab(pageTitle, items) {
+  function openResultsTab(pageTitle, items, targetTab) {
     items.sort(function (a, b) {
       return b.d - a.d;
     });
 
     var itemsJson = JSON.stringify(items).replace(/<\/script>/gi, '<\\/script>');
 
+    var safeTitle = esc(pageTitle);
     var html =
       '<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' +
-      pageTitle +
+      safeTitle +
       ' — ' +
       items.length +
       ' Deals</title><style>' +
@@ -713,7 +760,7 @@
       '<div class=header>' +
       '<div class=header-top>' +
       '<div class=header-title>' +
-      pageTitle +
+      safeTitle +
       '</div>' +
       '<div class=header-badge id=countBadge>' +
       items.length +
@@ -724,6 +771,7 @@
       '<div class=filter-wrap id=categorySelectWrap style="display:none;position:relative"><span class=filter-label>Categories:</span><button type=button id=catDropdownBtn style="padding:7px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:12.5px;background:#fff;color:#111;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:140px"><span id=catBtnText>All Categories</span><span style="font-size:10px;color:#555">▼</span></button><div id=catDropdownPanel style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:240px;max-width:320px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;flex-direction:column;overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-bottom:1px solid #e2e8f0"><span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Filter Categories</span><div style="display:flex;gap:8px"><button type=button id=catSelectAllBtn style="background:none;border:none;font-size:11px;font-weight:600;color:#1a73e8;cursor:pointer;padding:0">All</button><span style="color:#cbd5e1">|</span><button type=button id=catClearAllBtn style="background:none;border:none;font-size:11px;font-weight:600;color:#ef4444;cursor:pointer;padding:0">Clear</button></div></div><div id=catCheckboxesList style="max-height:220px;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:3px"></div></div></div>' +
       '<div class=filter-wrap id=brandSelectWrap style="display:none"><span class=filter-label>Brand:</span><select id=brandSelect><option value="">All Brands</option></select></div>' +
       '<div class=sort-wrap><span class=sort-label>Sort:</span><select id=sortSelect><option value=discount-desc selected>Discount: High to Low</option><option value=price-asc>Price: Low to High</option><option value=price-desc>Price: High to Low</option></select></div>' +
+      '<div style="display:flex;align-items:center;margin-left:auto"><label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#555;cursor:pointer;user-select:none"><input type=checkbox id=hideTrinketsCb checked style="cursor:pointer;accent-color:#058552;width:14px;height:14px">Hide Pooja/Trinkets (&gt;₹15)</label></div>' +
       '</div>' +
       '</div>' +
       '<div id=grid class=grid></div>' +
@@ -811,9 +859,9 @@
       'nr.style.display="none";' +
       'g.innerHTML=list.map(function(e){' +
       'var st=esc(e.t);' +
-      'return "<a class=card href=\\"https://www.amazon.in/dp/"+e.a+"\\" target=_blank rel=noopener>"' +
+      'return "<a class=card href=\\"https://www.amazon.in/dp/"+esc(e.a)+"\\" target=_blank rel=noopener>"' +
       '+ "<div class=img-wrap>" + (e.d?"<div class=discount-badge><span class=disc-pct>"+e.d+"%</span><span class=disc-off>Off</span></div>":"")' +
-      '+ "<img src=\\""+e.img+"\\" loading=lazy onerror=\\"this.remove()\\"></div>"' +
+      '+ "<img src=\\""+esc(e.img)+"\\" loading=lazy onerror=\\"this.remove()\\"></div>"' +
       '+ "<div class=card-body>"' +
       '+ (e.b?"<div class=brand-name>"+esc(e.b)+"</div>":"")' +
       '+ "<div class=title title=\\""+st+"\\">"+st+"</div>"' +
@@ -825,9 +873,16 @@
       'var q=(document.getElementById("searchInput").value||"").trim().toLowerCase();' +
       'var sm=document.getElementById("sortSelect").value;' +
       'var selBrand=brandSel.value;' +
+      'var TRINKET_RE = /\\b(pooja|puja|agarbatti|incense|camphor|diya|havan|dhoop|chandan|kapoor|cotton\\s*wicks?|batti|sambrani|gopuram|mangalam|holy|rakhi|rakshabandhan|rakhee|rakshasutra|lumba|raakhee|bracelet|bangle|finger\\s*rings?|earrings?|cufflinks?|keychains?|pendant|necklace|anklet)\\b/i;' +
+      'var hideTrinketsEl = document.getElementById("hideTrinketsCb");' +
+      'var hideTrinkets = hideTrinketsEl && hideTrinketsEl.checked;' +
       'var list=rawItems.filter(function(it){' +
       'if(q && (!it.t || it.t.toLowerCase().indexOf(q)===-1) && (!it.b || it.b.toLowerCase().indexOf(q)===-1)) return false;' +
       'if(selBrand && it.b!==selBrand) return false;' +
+      'if(hideTrinkets && (it.bp === null || it.bp > 15)){' +
+      'var isTrinket = (it.c && it.c.indexOf("Pooja & Religious Needs") !== -1) || TRINKET_RE.test(it.t || "");' +
+      'if(isTrinket) return false;' +
+      '}' +
       'if(selectedCats.size < categories.length){' +
       'if(selectedCats.size === 0) return false;' +
       'var matched = false;' +
@@ -851,10 +906,12 @@
       'document.getElementById("searchInput").addEventListener("input",update);' +
       'document.getElementById("sortSelect").addEventListener("change",update);' +
       'brandSel.addEventListener("change",update);' +
+      'var htCb = document.getElementById("hideTrinketsCb");' +
+      'if (htCb) htCb.addEventListener("change", update);' +
       'update();' +
       '<\/script></body></html>';
 
-    var tab = window.open('', '_blank');
+    var tab = (targetTab && !targetTab.closed) ? targetTab : window.open('', '_blank');
     if (tab) {
       tab.document.open();
       tab.document.write(html);
@@ -889,7 +946,7 @@
   discSec.innerHTML =
     '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Min Discount Filter</div>';
   var pillRow = document.createElement('div');
-  pillRow.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px;';
+  pillRow.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;';
   var pillButtons = [];
 
   discountPillsData.forEach(function (pObj) {
@@ -1354,26 +1411,35 @@
     });
   }
 
-  // 1. Global Store Fetch Handler (/s?i=amazontez)
+  // 1. Global Store Fetch Handler (/s?i=amazontez with p_36 price brackets)
   globalBtn.onclick = async function () {
+    var targetTab = createLoadingTab('Loading Global Deals...');
     setAllControlsDisabled(true);
     try {
       var seenAsins = {};
       var items = [];
-      var page = 1;
-      var MAX_PAGES = 15;
-      var emptyStreak = 0;
+      var priceBrackets = [
+        { label: 'Under ₹50', facet: '0-5000' },
+        { label: '₹50–₹100', facet: '5000-10000' },
+        { label: '₹100–₹200', facet: '10000-20000' },
+        { label: '₹200–₹500', facet: '20000-50000' },
+        { label: '₹500+', facet: '50000-' }
+      ];
+      var PAGES_PER_BRACKET = 2;
 
-      while (page <= MAX_PAGES) {
-        var batchPages = [page];
-        if (page + 1 <= MAX_PAGES) batchPages.push(page + 1);
+      for (var bIdx = 0; bIdx < priceBrackets.length; bIdx++) {
+        var bracket = priceBrackets[bIdx];
+        var pages = [];
+        for (var p = 1; p <= PAGES_PER_BRACKET; p++) {
+          pages.push(p);
+        }
 
         globalBtn.textContent =
-          'Scanning P' + batchPages.join(', P') + ' (' + items.length + ' found)...';
+          '(' + (bIdx + 1) + '/' + priceBrackets.length + ') ' + bracket.label + ' (' + items.length + ' found)...';
 
         var results = await Promise.all(
-          batchPages.map(function (p) {
-            return fetch(buildGlobalSearchUrl(selectedDiscountNode, p), {
+          pages.map(function (pageNo) {
+            return fetch(buildGlobalSearchUrl(selectedDiscountNode, pageNo, bracket.facet), {
               credentials: 'include'
             })
               .then(function (r) {
@@ -1385,46 +1451,24 @@
           })
         );
 
-        var stopLoop = false;
-        for (var i = 0; i < results.length; i++) {
-          var html = results[i];
-          if (!html) {
-            stopLoop = true;
-            break;
-          }
+        for (var rIdx = 0; rIdx < results.length; rIdx++) {
+          var html = results[rIdx];
+          if (!html) continue;
           var parsedPage = parseHtmlSearchPage(html);
-          if (parsedPage.totalCards === 0) {
-            stopLoop = true;
-            break;
-          }
+          if (parsedPage.totalCards === 0) continue;
 
-          var addedOnPage = 0;
           for (var j = 0; j < parsedPage.items.length; j++) {
             var prod = parsedPage.items[j];
             if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
               seenAsins[prod.a] = 1;
               items.push(prod);
-              addedOnPage++;
             }
-          }
-
-          if (addedOnPage === 0) {
-            emptyStreak++;
-            if (emptyStreak >= 2) {
-              stopLoop = true;
-              break;
-            }
-          } else {
-            emptyStreak = 0;
           }
         }
-
-        if (stopLoop) break;
-        page += batchPages.length;
-        await sleep(350);
+        await sleep(200);
       }
 
-      openResultsTab('Amazon Now Global (' + selectedMinDiscount + '%+ Off)', items);
+      openResultsTab('Amazon Now Global (' + selectedMinDiscount + '%+ Off)', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
       updateDiscountPillsUI();
@@ -1441,18 +1485,47 @@
     }
     kwInput.value = kw;
 
+    var targetTab = createLoadingTab('Searching: "' + kw + '"...');
     setAllControlsDisabled(true);
 
     try {
       var seenAsins = {};
       var items = [];
       var page = 1;
-      var MAX_PAGES = 5;
+      var MAX_PAGES = 15;
+      var BATCH_SIZE = 2;
       var emptyStreak = 0;
 
+      // Always fetch unfiltered Page 1 to ensure all Page 1 items (even below min discount) are captured
+      kwBtn.textContent = 'Scanning P1...';
+      try {
+        var p1Html = await fetch(buildKeywordRawSearchUrl(kw, 1), {
+          credentials: 'include'
+        })
+          .then(function (r) {
+            return r.ok ? r.text() : '';
+          })
+          .catch(function () {
+            return '';
+          });
+
+        if (p1Html) {
+          var p1Parsed = parseHtmlSearchPage(p1Html);
+          for (var i = 0; i < p1Parsed.items.length; i++) {
+            var p1Prod = p1Parsed.items[i];
+            if (p1Prod.d >= selectedMinDiscount && !seenAsins[p1Prod.a]) {
+              seenAsins[p1Prod.a] = 1;
+              items.push(p1Prod);
+            }
+          }
+        }
+      } catch (e) {}
+
       while (page <= MAX_PAGES) {
-        var batchPages = [page];
-        if (page + 1 <= MAX_PAGES) batchPages.push(page + 1);
+        var batchPages = [];
+        for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
+          batchPages.push(page + b);
+        }
 
         kwBtn.textContent = 'P' + batchPages.join(', P') + ' (' + items.length + ')';
 
@@ -1495,7 +1568,7 @@
 
           if (addedOnPage === 0) {
             emptyStreak++;
-            if (emptyStreak >= 2) {
+            if (emptyStreak >= 3) {
               stopLoop = true;
               break;
             }
@@ -1506,10 +1579,10 @@
 
         if (stopLoop) break;
         page += batchPages.length;
-        await sleep(300);
+        await sleep(250);
       }
 
-      openResultsTab('Search: "' + kw + '" (' + selectedMinDiscount + '%+ Off)', items);
+      openResultsTab('Search: "' + kw + '" (' + selectedMinDiscount + '%+ Off)', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
       updateDiscountPillsUI();
@@ -1530,6 +1603,12 @@
     if (selectedCategories.length === 0) return;
     if (!ensureBrandId()) return;
 
+    var catNames = selectedCategories
+      .map(function (item) {
+        return item.name;
+      })
+      .join(' & ');
+    var targetTab = createLoadingTab('Scanning ' + catNames + '...');
     setAllControlsDisabled(true);
 
     try {
@@ -1610,6 +1689,7 @@
 
             var batchHadItems = false;
             var shouldStop = false;
+            var latestNextOffset = null;
 
             for (var rIdx = 0; rIdx < results.length; rIdx++) {
               var resObj = results[rIdx];
@@ -1650,6 +1730,9 @@
               batchHadItems = true;
 
               var meta = data.metadata || {};
+              if (typeof meta.nextOffset === 'number' && meta.nextOffset > offset) {
+                latestNextOffset = meta.nextOffset;
+              }
               var more = meta.hasMoreWidgets !== undefined ? !!meta.hasMoreWidgets : true;
               if (!more) {
                 shouldStop = true;
@@ -1662,7 +1745,11 @@
               break;
             }
 
-            offset += batchOffsets.length;
+            if (latestNextOffset !== null && latestNextOffset > offset) {
+              offset = latestNextOffset;
+            } else {
+              offset += batchOffsets.length;
+            }
             await sleep(600);
           } catch (err) {
             hasMore = false;
@@ -1670,7 +1757,7 @@
         }
       }
 
-      openResultsTab(catNames + ' (' + selectedMinDiscount + '%+ Off)', items);
+      openResultsTab(catNames + ' (' + selectedMinDiscount + '%+ Off)', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
       selectedCategories = [];

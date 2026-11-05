@@ -1,18 +1,15 @@
 import html
 import json
 import time
-import urllib.parse
-import urllib.request
-import ssl
+import requests
 from . import config
-
-ctx = ssl.create_default_context()
 
 class TelegramNotifier:
     def __init__(self, bot_token=None, chat_id=None):
         self.bot_token = (bot_token or config.TELEGRAM_BOT_TOKEN).strip()
         self.chat_id = (chat_id or config.TELEGRAM_CHAT_ID).strip()
         self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
+        self.session = requests.Session()
 
     @property
     def is_configured(self):
@@ -31,6 +28,7 @@ class TelegramNotifier:
         mrp = deal.get("mrp", fsp)
         disc = deal.get("discount", 0)
         link = deal.get("url") or deal.get("link") or "https://www.amazon.in"
+        link_escaped = html.escape(link, quote=True)
 
         price_part = f"₹{fsp}"
         if mrp and mrp > fsp:
@@ -39,7 +37,7 @@ class TelegramNotifier:
         lines = [
             f"<b>{title}</b>",
             f"<i>{category}</i>" if category else "",
-            f"🔥 <b>{disc}% OFF</b> || <b>{price_part}</b> || <a href=\"{link}\">Click here</a>"
+            f"🔥 <b>{disc}% OFF</b> || <b>{price_part}</b> || <a href=\"{link_escaped}\">Click here</a>"
         ]
         return "\n".join([line for line in lines if line])
 
@@ -58,7 +56,7 @@ class TelegramNotifier:
         time.sleep(1.0)
         return success
 
-    def send_deals_batch(self, deals, min_discount=60):
+    def send_deals_batch(self, deals):
         """
         Batches multiple deals into compact digest messages up to Telegram's 4096 char limit.
         Returns a list of ASINs that were successfully sent.
@@ -77,15 +75,16 @@ class TelegramNotifier:
         current_batch = []
         current_len = 0
 
+        # Pre-format each deal block to avoid duplicate format calls
         for deal in deals:
             block = self.format_deal_block(deal)
             block_len = len(block) + 2  # Double newline separator
             if current_batch and (current_len + block_len > max_chars_per_msg or len(current_batch) >= max_items_per_msg):
                 batches.append(current_batch)
-                current_batch = [deal]
+                current_batch = [(deal, block)]
                 current_len = block_len
             else:
-                current_batch.append(deal)
+                current_batch.append((deal, block))
                 current_len += block_len
 
         if current_batch:
@@ -97,13 +96,13 @@ class TelegramNotifier:
         successful_asins = []
 
         for b_idx, batch in enumerate(batches, start=1):
-            blocks = [self.format_deal_block(d) for d in batch]
+            blocks = [b_text for (_, b_text) in batch]
             message_text = "\n\n".join(blocks)
 
             print(f"  [Telegram] Sending batch {b_idx}/{total_batches} ({len(batch)} items, {len(message_text)} chars)...")
             success = self._send_text(message_text)
             if success:
-                for d in batch:
+                for (d, _) in batch:
                     asin = d.get("asin")
                     if asin:
                         successful_asins.append(asin)
@@ -115,7 +114,7 @@ class TelegramNotifier:
 
         return successful_asins
 
-    def _send_text(self, text):
+    def _send_text(self, text, max_retries=2):
         url = f"{self.base_url}/sendMessage"
         payload = {
             "chat_id": self.chat_id,
@@ -123,17 +122,30 @@ class TelegramNotifier:
             "parse_mode": "HTML",
             "disable_web_page_preview": True
         }
-        try:
-            data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(
-                url,
-                data=data,
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
-            with urllib.request.urlopen(req, context=ctx, timeout=12) as res:
-                res_data = json.loads(res.read().decode("utf-8"))
-                return res_data.get("ok", False)
-        except Exception as e:
-            print(f"  [Telegram Error] {e}")
-            return False
+        for attempt in range(max_retries + 1):
+            try:
+                resp = self.session.post(url, json=payload, timeout=15)
+                if resp.status_code == 429:
+                    retry_after = 5
+                    try:
+                        data = resp.json()
+                        retry_after = int(data.get("parameters", {}).get("retry_after", 5))
+                    except Exception:
+                        pass
+                    print(f"  [⏳ Telegram 429 Rate Limit] Backing off {retry_after + 1}s (attempt {attempt + 1}/{max_retries})...")
+                    time.sleep(retry_after + 1)
+                    continue
+
+                if resp.status_code == 200:
+                    res_data = resp.json()
+                    return res_data.get("ok", False)
+                else:
+                    print(f"  [Telegram Error] HTTP {resp.status_code}: {resp.text[:120]}")
+                    return False
+            except Exception as e:
+                print(f"  [Telegram Error] {e}")
+                if attempt < max_retries:
+                    time.sleep(2.0)
+                else:
+                    return False
+        return False

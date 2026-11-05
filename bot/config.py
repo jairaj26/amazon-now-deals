@@ -60,8 +60,22 @@ DISCOUNT_NODE_MAP = {
     70: "27060457031"
 }
 
-# Maximum global search pages to fetch per run
+# Maximum global search pages to fetch per run (fallback if PRICE_BRACKETS disabled)
 MAX_GLOBAL_PAGES = int(os.getenv("MAX_GLOBAL_PAGES", "15"))
+
+# Price brackets for deep deal discovery via p_36 (in paise: 1 INR = 100 paise)
+# Slices the store into distinct price tiers so deep discounts (e.g. 96%, 99%)
+# are not buried by high-priced or sponsored items.
+PRICE_BRACKETS = [
+    {"label": "Under ₹50", "facet": "0-5000"},
+    {"label": "₹50 - ₹100", "facet": "5000-10000"},
+    {"label": "₹100 - ₹200", "facet": "10000-20000"},
+    {"label": "₹200 - ₹500", "facet": "20000-50000"},
+    {"label": "₹500+", "facet": "50000-"}
+]
+
+# Pages to scan per price bracket (defaults to 2, e.g. 5 brackets * 2 pages = 10 requests)
+MAX_PAGES_PER_BRACKET = int(os.getenv("MAX_PAGES_PER_BRACKET", "2"))
 
 # HTTP & API Headers
 # Modern Android Mobile User-Agent allows Amazon to return the mobile list view containing
