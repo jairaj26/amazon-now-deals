@@ -37,11 +37,109 @@
     if (tab) {
       try {
         tab.document.open();
-        tab.document.write('<!DOCTYPE html><html><head><title>' + esc(title || 'Loading Deals...') + '</title><meta charset=utf-8><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f4f6f8;color:#333;}.box{text-align:center;padding:24px 32px;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);max-width:360px;}.spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#058552;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div class=box><div class=spinner></div><h3 style="margin-bottom:8px">Scanning Amazon Now deals...</h3><p style="font-size:13px;color:#666">Please wait while deals are collected.</p></div></body></html>');
+        var loadingHtml = [
+          '<!DOCTYPE html>',
+          '<html>',
+          '<head>',
+          '  <title>' + esc(title || 'Scanning Deals...') + '</title>',
+          '  <meta charset="utf-8">',
+          '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+          '  <style>',
+          '    * { box-sizing: border-box; margin: 0; padding: 0; }',
+          '    body {',
+          '      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;',
+          '      display: flex;',
+          '      align-items: center;',
+          '      justify-content: center;',
+          '      min-height: 100vh;',
+          '      background: #f8fafc;',
+          '      color: #0f172a;',
+          '      padding: 20px;',
+          '    }',
+          '    .card {',
+          '      text-align: center;',
+          '      padding: 36px 32px;',
+          '      background: #ffffff;',
+          '      border: 1px solid #e2e8f0;',
+          '      border-radius: 16px;',
+          '      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.02);',
+          '      width: 420px;',
+          '      max-width: 100%;',
+          '    }',
+          '    .spinner {',
+          '      width: 42px;',
+          '      height: 42px;',
+          '      border: 3.5px solid #e2e8f0;',
+          '      border-top-color: #058552;',
+          '      border-radius: 50%;',
+          '      animation: spin 0.8s linear infinite;',
+          '      margin: 0 auto 18px;',
+          '    }',
+          '    @keyframes spin { to { transform: rotate(360deg); } }',
+          '    .title {',
+          '      font-size: 16px;',
+          '      font-weight: 700;',
+          '      color: #0f172a;',
+          '      margin-bottom: 6px;',
+          '    }',
+          '    .track {',
+          '      width: 100%;',
+          '      height: 8px;',
+          '      background: #f1f5f9;',
+          '      border-radius: 9999px;',
+          '      overflow: hidden;',
+          '      margin: 18px 0 12px;',
+          '      border: 1px solid #e2e8f0;',
+          '    }',
+          '    .bar {',
+          '      width: 8%;',
+          '      height: 100%;',
+          '      background: linear-gradient(90deg, #058552, #10b981);',
+          '      border-radius: 9999px;',
+          '      transition: width 0.3s ease;',
+          '    }',
+          '    .status {',
+          '      font-size: 13px;',
+          '      font-weight: 600;',
+          '      color: #334155;',
+          '      margin-bottom: 4px;',
+          '    }',
+          '    .sub {',
+          '      font-size: 12px;',
+          '      color: #64748b;',
+          '    }',
+          '  </style>',
+          '</head>',
+          '<body>',
+          '  <div class="card">',
+          '    <div class="spinner"></div>',
+          '    <div class="title" id="__aznowTitle">' + esc(title || 'Scanning Amazon Now Deals...') + '</div>',
+          '    <div class="track"><div class="bar" id="__aznowProgressBar"></div></div>',
+          '    <div class="status" id="__aznowProgressText">Initializing scanner...</div>',
+          '    <div class="sub" id="__aznowProgressSub">Please keep this tab open</div>',
+          '  </div>',
+          '</body>',
+          '</html>'
+        ].join('\n');
+        tab.document.write(loadingHtml);
         tab.document.close();
       } catch (e) {}
     }
     return tab;
+  }
+
+  function updateLoadingProgress(tab, pct, statusText, subText) {
+    if (!tab || tab.closed) return;
+    try {
+      var d = tab.document;
+      if (!d) return;
+      var bar = d.getElementById('__aznowProgressBar');
+      if (bar) bar.style.width = Math.max(5, Math.min(100, pct)) + '%';
+      var txt = d.getElementById('__aznowProgressText');
+      if (txt && statusText) txt.textContent = statusText;
+      var sub = d.getElementById('__aznowProgressSub');
+      if (sub && subText) sub.textContent = subText;
+    } catch (e) {}
   }
 
   function sleep(ms) {
@@ -120,8 +218,8 @@
     { pct: 70, node: '27060457031', label: '70%' }
   ];
 
-  var selectedMinDiscount = 50;
-  var selectedDiscountNode = '2665401031';
+  var selectedMinDiscount = 70;
+  var selectedDiscountNode = '27060457031';
   var TEZ_SRS_NODE = '100147972031';
 
   // Mapping of category nodes requiring merch endpoint vs category endpoint
@@ -938,17 +1036,16 @@
     }
   }
 
-  function populatePriceDropdown(discountPct) {
+  function populatePriceDropdown() {
+    var curVal = priceSelect.value || '0-5000';
     priceSelect.innerHTML = '';
-    var opts = [];
-    if (discountPct === 70) {
-      opts.push({ label: 'Under ₹100 (₹0–₹100)', val: '0-5000,5000-10000' });
-    }
-    opts.push({ label: 'Under ₹50', val: '0-5000' });
-    opts.push({ label: '₹50 – ₹100', val: '5000-10000' });
-    opts.push({ label: '₹100 – ₹200', val: '10000-20000' });
-    opts.push({ label: '₹200 – ₹500', val: '20000-50000' });
-    opts.push({ label: 'Above ₹500', val: '50000-' });
+    var opts = [
+      { label: 'Under ₹50', val: '0-5000' },
+      { label: '₹50 – ₹100', val: '5000-10000' },
+      { label: '₹100 – ₹200', val: '10000-20000' },
+      { label: '₹200 – ₹500', val: '20000-50000' },
+      { label: 'Above ₹500', val: '50000-' }
+    ];
 
     opts.forEach(function (o) {
       var opt = document.createElement('option');
@@ -957,9 +1054,10 @@
       priceSelect.appendChild(opt);
     });
 
-    // Default to the first option
-    priceSelect.value = opts[0].val;
-    selectedPriceFacets = opts[0].val.split(',');
+    // Preserve previously selected price if valid, else default to Under ₹50
+    var match = opts.some(function (o) { return o.val === curVal; });
+    priceSelect.value = match ? curVal : opts[0].val;
+    selectedPriceFacets = priceSelect.value.split(',');
     updateGlobalButtonUI();
   }
 
@@ -972,7 +1070,7 @@
         break;
       }
     }
-    populatePriceDropdown(pct);
+    populatePriceDropdown();
     updateCategoryUI();
   };
 
@@ -981,8 +1079,8 @@
     updateGlobalButtonUI();
   };
 
-  // Populate initial price options for 50%
-  populatePriceDropdown(50);
+  // Populate initial price options (defaults to Under ₹50)
+  populatePriceDropdown();
 
     // Tab Navigation (Segmented Switcher)
   var tabNav = document.createElement('div');
@@ -1436,134 +1534,97 @@
     try {
       var seenAsins = {};
       var items = [];
-      var facets = selectedPriceFacets.slice();
+      var facet = (selectedPriceFacets && selectedPriceFacets[0]) || '0-5000';
 
-      async function fetchFacetBracket(facet, facetName) {
-        var page = 1;
-        var MAX_PAGES = 10;
-        var hasMore = true;
+      updateLoadingProgress(targetTab, 15, 'Scanning ' + pLabel + ' (Page 1)...', 'Connecting to Amazon Now...');
+      globalBtn.textContent = 'Fetching ' + pLabel + ' P.1 (' + items.length + ' deals)...';
+      var p1Html = '';
+      try {
+        var r1 = await fetch(buildGlobalSearchUrl(selectedDiscountNode, 1, facet), { credentials: 'include' });
+        if (r1.ok) p1Html = await r1.text();
+      } catch (e) {}
 
-        while (hasMore && page <= MAX_PAGES) {
-          globalBtn.textContent = 'Fetching ' + facetName + ' P.' + page + ' (' + items.length + ' deals)...';
-          var html = '';
-          try {
-            var r = await fetch(buildGlobalSearchUrl(selectedDiscountNode, page, facet), { credentials: 'include' });
-            if (r.ok) html = await r.text();
-          } catch (e) {}
-
-          if (!html) break;
-          var parsedPage = parseHtmlSearchPage(html);
-          if (parsedPage.totalCards === 0) break;
-
-          var addedOnPage = 0;
-          for (var j = 0; j < parsedPage.items.length; j++) {
-            var prod = parsedPage.items[j];
-            if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
-              seenAsins[prod.a] = 1;
-              items.push(prod);
-              addedOnPage++;
-            }
+      if (p1Html) {
+        var p1Parsed = parseHtmlSearchPage(p1Html);
+        var p1Added = 0;
+        for (var j = 0; j < p1Parsed.items.length; j++) {
+          var prod = p1Parsed.items[j];
+          if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
+            seenAsins[prod.a] = 1;
+            items.push(prod);
+            p1Added++;
           }
-
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          var nextLink = doc.querySelector('a[href*="page=' + (page + 1) + '"], .s-pagination-next:not(.s-pagination-disabled)');
-          if (!nextLink || addedOnPage === 0) {
-            hasMore = false;
-            break;
-          }
-
-          page++;
-          await sleep(250);
         }
-      }
 
-      // Concurrency = 2:
-      // If 2 price brackets are selected (e.g. Under 50 & 50-100 for Under ₹100), fetch them both in parallel!
-      if (facets.length >= 2) {
-        await Promise.all([
-          fetchFacetBracket(facets[0], 'Under ₹50'),
-          fetchFacetBracket(facets[1], '₹50–₹100')
-        ]);
-      } else if (facets.length === 1) {
-        // Single bracket: Page 1 first, then subsequent pages in batches of 2 (concurrency = 2)
-        var facet = facets[0];
-        globalBtn.textContent = 'Fetching ' + pLabel + ' P.1 (' + items.length + ' deals)...';
-        var p1Html = '';
-        try {
-          var r1 = await fetch(buildGlobalSearchUrl(selectedDiscountNode, 1, facet), { credentials: 'include' });
-          if (r1.ok) p1Html = await r1.text();
-        } catch (e) {}
+        updateLoadingProgress(targetTab, 30, 'Page 1 scanned (' + items.length + ' deals found)', 'Scanning deeper pages...');
 
-        if (p1Html) {
-          var p1Parsed = parseHtmlSearchPage(p1Html);
-          var p1Added = 0;
-          for (var j = 0; j < p1Parsed.items.length; j++) {
-            var prod = p1Parsed.items[j];
-            if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
-              seenAsins[prod.a] = 1;
-              items.push(prod);
-              p1Added++;
+        var doc1 = new DOMParser().parseFromString(p1Html, 'text/html');
+        var next1 = doc1.querySelector('a[href*="page=2"], .s-pagination-next:not(.s-pagination-disabled)');
+
+        if (next1 && p1Added > 0) {
+          var page = 2;
+          var MAX_PAGES = 10;
+          var BATCH_SIZE = 2;
+          var hasMore = true;
+
+          while (hasMore && page <= MAX_PAGES) {
+            var batch = [];
+            for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
+              batch.push(page + b);
             }
-          }
 
-          var doc1 = new DOMParser().parseFromString(p1Html, 'text/html');
-          var next1 = doc1.querySelector('a[href*="page=2"], .s-pagination-next:not(.s-pagination-disabled)');
+            var progressPct = Math.min(92, Math.round(30 + ((page - 1) / MAX_PAGES) * 62));
+            updateLoadingProgress(
+              targetTab,
+              progressPct,
+              'Scanning ' + pLabel + ' (Pages ' + batch.join(', ') + ')...',
+              items.length + ' qualifying deal' + (items.length === 1 ? '' : 's') + ' found so far'
+            );
 
-          if (next1 && p1Added > 0) {
-            var page = 2;
-            var MAX_PAGES = 10;
-            var BATCH_SIZE = 2;
-            var hasMore = true;
+            globalBtn.textContent = 'Fetching ' + pLabel + ' P.' + batch.join(', P.') + ' (' + items.length + ' deals)...';
 
-            while (hasMore && page <= MAX_PAGES) {
-              var batch = [];
-              for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
-                batch.push(page + b);
-              }
+            var results = await Promise.all(
+              batch.map(function (p) {
+                return fetch(buildGlobalSearchUrl(selectedDiscountNode, p, facet), { credentials: 'include' })
+                  .then(function (r) { return r.ok ? r.text() : ''; })
+                  .catch(function () { return ''; });
+              })
+            );
 
-              globalBtn.textContent = 'Fetching ' + pLabel + ' P.' + batch.join(', P.') + ' (' + items.length + ' deals)...';
+            var shouldStop = false;
+            for (var i = 0; i < results.length; i++) {
+              var h = results[i];
+              if (!h) { shouldStop = true; break; }
+              var pp = parseHtmlSearchPage(h);
+              if (pp.totalCards === 0) { shouldStop = true; break; }
 
-              var results = await Promise.all(
-                batch.map(function (p) {
-                  return fetch(buildGlobalSearchUrl(selectedDiscountNode, p, facet), { credentials: 'include' })
-                    .then(function (r) { return r.ok ? r.text() : ''; })
-                    .catch(function () { return ''; });
-                })
-              );
-
-              var shouldStop = false;
-              for (var i = 0; i < results.length; i++) {
-                var h = results[i];
-                if (!h) { shouldStop = true; break; }
-                var pp = parseHtmlSearchPage(h);
-                if (pp.totalCards === 0) { shouldStop = true; break; }
-
-                var added = 0;
-                for (var j = 0; j < pp.items.length; j++) {
-                  var prod = pp.items[j];
-                  if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
-                    seenAsins[prod.a] = 1;
-                    items.push(prod);
-                    added++;
-                  }
-                }
-
-                var d = new DOMParser().parseFromString(h, 'text/html');
-                var nl = d.querySelector('a[href*="page=' + (batch[i] + 1) + '"], .s-pagination-next:not(.s-pagination-disabled)');
-                if (!nl || added === 0) {
-                  shouldStop = true;
-                  break;
+              var added = 0;
+              for (var j = 0; j < pp.items.length; j++) {
+                var prod = pp.items[j];
+                if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
+                  seenAsins[prod.a] = 1;
+                  items.push(prod);
+                  added++;
                 }
               }
 
-              if (shouldStop) break;
-              page += batch.length;
-              await sleep(250);
+              var d = new DOMParser().parseFromString(h, 'text/html');
+              var nl = d.querySelector('a[href*="page=' + (batch[i] + 1) + '"], .s-pagination-next:not(.s-pagination-disabled)');
+              if (!nl || added === 0) {
+                shouldStop = true;
+                break;
+              }
             }
+
+            if (shouldStop) break;
+            page += batch.length;
+            await sleep(250);
           }
         }
       }
 
+      updateLoadingProgress(targetTab, 100, 'Finishing up...', items.length + ' deals found! Opening grid...');
+      await sleep(150);
       openResultsTab('Amazon Now (' + selectedMinDiscount + '%+ Off | ' + pLabel + ')', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
@@ -1593,6 +1654,7 @@
       var emptyStreak = 0;
 
       // 1. Fetch unfiltered Page 1 to ensure all Page 1 items are captured
+      updateLoadingProgress(targetTab, 15, 'Searching for "' + kw + '" (Page 1)...', 'Connecting to Amazon Now...');
       kwBtn.textContent = 'Scanning P1...';
       var p1DealsCount = 0;
       try {
@@ -1622,6 +1684,8 @@
         }
       } catch (e) {}
 
+      updateLoadingProgress(targetTab, 35, 'Page 1 scanned (' + items.length + ' deals found)', p1DealsCount >= 3 ? 'Scanning deeper pages...' : 'Done scanning.');
+
       // 2. Fetch Page 2+ ONLY if Page 1 has at least 3 items with >= min discount
       if (p1DealsCount >= 3) {
         var page = 2;
@@ -1630,6 +1694,14 @@
           for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
             batchPages.push(page + b);
           }
+
+          var progressPct = Math.min(92, Math.round(35 + ((page - 1) / MAX_PAGES) * 58));
+          updateLoadingProgress(
+            targetTab,
+            progressPct,
+            'Searching "' + kw + '" (Pages ' + batchPages.join(', ') + ')...',
+            items.length + ' deal' + (items.length === 1 ? '' : 's') + ' found so far'
+          );
 
           kwBtn.textContent = 'P' + batchPages.join(', P') + ' (' + items.length + ')';
 
@@ -1687,6 +1759,8 @@
         }
       }
 
+      updateLoadingProgress(targetTab, 100, 'Finishing up...', items.length + ' deals found! Opening grid...');
+      await sleep(150);
       openResultsTab('Search: "' + kw + '" (' + selectedMinDiscount + '%+ Off)', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
@@ -1722,11 +1796,20 @@
       var catQueue = selectedCategories.slice();
       var completedCount = 0;
       var totalCount = selectedCategories.length;
+      updateLoadingProgress(targetTab, 10, 'Preparing ' + totalCount + ' categories...', 'Scanning starting...');
 
       async function processCategoryWorker() {
         while (catQueue.length > 0) {
           var curCat = catQueue.shift();
           if (!curCat) break;
+
+          var pct = Math.min(92, Math.round(10 + (completedCount / totalCount) * 82));
+          updateLoadingProgress(
+            targetTab,
+            pct,
+            'Scanning (' + (completedCount + 1) + '/' + totalCount + ') ' + curCat.name + '...',
+            items.length + ' deals found so far'
+          );
 
           fetchCatBtn.textContent =
             '(' + (completedCount + 1) + '/' + totalCount + ') ' + curCat.name + ' P1 (' + items.length + ' deals)';
@@ -1744,9 +1827,9 @@
             var p1DealsCount = 0;
 
             for (var w = 0; w < p1Widgets.length; w++) {
-              var prods = (p1Widgets[w].data && p1Widgets[w].data.products) || [];
-              for (var p = 0; p < prods.length; p++) {
-                var prod = parseProduct(prods[p], curCat.name);
+              var p1Prods = (p1Widgets[w].data && p1Widgets[w].data.products) || [];
+              for (var p = 0; p < p1Prods.length; p++) {
+                var prod = parseProduct(p1Prods[p], curCat.name);
                 if (prod && prod.a) {
                   // Always display all Page 1 products!
                   if (!seenAsins[prod.a]) {
@@ -1824,6 +1907,13 @@
           }
 
           completedCount++;
+          var pctDone = Math.min(92, Math.round(10 + (completedCount / totalCount) * 82));
+          updateLoadingProgress(
+            targetTab,
+            pctDone,
+            'Finished ' + curCat.name + ' (' + completedCount + '/' + totalCount + ')',
+            items.length + ' deals found so far'
+          );
           await sleep(150);
         }
       }
@@ -1836,6 +1926,8 @@
       }
       await Promise.all(workers);
 
+      updateLoadingProgress(targetTab, 100, 'Finishing up...', items.length + ' deals found! Opening grid...');
+      await sleep(150);
       openResultsTab(catNames + ' (' + selectedMinDiscount + '%+ Off)', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
