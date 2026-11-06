@@ -694,158 +694,151 @@
     });
 
     var itemsJson = JSON.stringify(items).replace(/<\/script>/gi, '<\\/script>');
-
     var safeTitle = esc(pageTitle);
-    var html =
-      '<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' +
-      safeTitle +
-      ' — ' +
-      items.length +
-      ' Deals</title><style>' +
-      '*{box-sizing:border-box;margin:0;padding:0}' +
-      'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6f8;color:#1a1a1a;padding:12px}' +
-      '.header{background:#fff;padding:14px 16px;border-radius:8px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:10px}' +
-      '.header-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}' +
-      '.header-title{font-size:16px;font-weight:700;color:#0f1111}' +
-      '.header-badge{background:#e8f0fe;color:#1a73e8;font-weight:600;font-size:12px;padding:4px 10px;border-radius:14px;white-space:nowrap}' +
-      '.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}' +
-      '.search-wrap{flex:2;min-width:180px}' +
-      '.search-wrap input{width:100%;padding:8px 12px;border:1px solid #d0d7de;border-radius:6px;font-size:13px;outline:none;background:#f9f9f9;font-family:inherit;transition:border-color .15s,background .15s}' +
-      '.search-wrap input:focus{border-color:#1a73e8;background:#fff}' +
-      '.filter-wrap,.sort-wrap{display:flex;align-items:center;gap:6px;flex:1;min-width:140px}' +
-      '.filter-label,.sort-label{font-size:12px;font-weight:600;color:#555;white-space:nowrap}' +
-      '.filter-wrap select,.sort-wrap select{width:100%;padding:8px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:13px;background:#fff;color:#111;outline:none;cursor:pointer;font-family:inherit}' +
-      '.filter-wrap select:focus,.sort-wrap select:focus{border-color:#1a73e8}' +
-      '.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}' +
-      '@media(max-width:1024px){.grid{grid-template-columns:repeat(4,1fr);gap:8px}}' +
-      '@media(max-width:768px){' +
-      'body{padding:8px}' +
-      '.header{padding:10px 12px;margin-bottom:8px;gap:8px}' +
-      '.header-title{font-size:14px}' +
-      '.controls{flex-direction:column;align-items:stretch;gap:6px}' +
-      '.search-wrap{min-width:100%}' +
-      '.search-wrap input{padding:8px 10px;font-size:12px}' +
-      '.filter-wrap,.sort-wrap{min-width:100%;justify-content:space-between}' +
-      '.filter-wrap select,.sort-wrap select{flex:1;padding:7px 10px;font-size:12px}' +
-      '.grid{grid-template-columns:repeat(3,1fr);gap:6px}' +
-      '}' +
-      '.card{display:flex;flex-direction:column;background:#fff;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden;text-decoration:none;color:inherit;position:relative;transition:transform .15s,box-shadow .15s;cursor:pointer}' +
-      '.card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.12);border-color:#cbd5e1}' +
-      '.img-wrap{width:100%;height:140px;background:#fafafa;position:relative;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}' +
-      '@media(max-width:768px){.img-wrap{height:105px;padding:4px}}' +
-      '.img-wrap img{max-width:100%;max-height:100%;object-fit:contain}' +
-      '.discount-badge{position:absolute;top:6px;left:6px;background:#058552;color:#fff;border-radius:4px;box-shadow:0 2px 5px rgba(5,133,82,.35);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 6px;text-align:center;line-height:1}' +
-      '.disc-pct{font-size:12px;font-weight:800;letter-spacing:-0.2px}' +
-      '.disc-off{font-size:9px;font-weight:700;margin-top:1px;letter-spacing:0.2px;opacity:.95}' +
-      '@media(max-width:768px){' +
-      '.discount-badge{top:4px;left:4px;padding:2px 5px}' +
-      '.disc-pct{font-size:10px}' +
-      '.disc-off{font-size:8px}' +
-      '}' +
-      '.card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1;justify-content:space-between;gap:6px}' +
-      '@media(max-width:768px){.card-body{padding:6px 6px 8px;gap:4px}}' +
-      '.brand-name{font-size:10px;font-weight:700;color:#565959;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-      '@media(max-width:768px){.brand-name{font-size:9px}}' +
-      '.title{font-size:12px;font-weight:600;line-height:1.35;color:#0f1111;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;min-height:32px}' +
-      '@media(max-width:768px){.title{font-size:11px;line-height:1.25;min-height:28px}}' +
-      '.pack-size{font-size:11px;color:#565959;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-      '@media(max-width:768px){.pack-size{font-size:10px}}' +
-      '.price-wrap{margin-top:auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}' +
-      '.price{font-size:15px;font-weight:700;color:#0f1111}' +
-      '@media(max-width:768px){.price{font-size:13px}}' +
-      '.mrp{font-size:11px;color:#565959;text-decoration:line-through}' +
-      '@media(max-width:768px){.mrp{font-size:10px}}' +
-      '.no-results{text-align:center;padding:40px 20px;color:#666;font-size:14px;background:#fff;border-radius:8px;border:1px solid #e2e8f0}' +
-      '</style></head><body>' +
-      '<div class=header>' +
-      '<div class=header-top>' +
-      '<div class=header-title>' +
-      safeTitle +
-      '</div>' +
-      '<div class=header-badge id=countBadge>' +
-      items.length +
-      ' items</div>' +
-      '</div>' +
-      '<div class=controls>' +
-      '<div class=search-wrap><input type=search id=searchInput placeholder="Search deals..." autocomplete=off></div>' +
-      '<div class=filter-wrap id=brandSelectWrap style="display:none"><span class=filter-label>Brand:</span><select id=brandSelect><option value="">All Brands</option></select></div>' +
-      '<div class=filter-wrap id=priceSelectWrap><span class=filter-label>Price:</span><select id=priceSelect><option value="">All Prices</option><option value="0-50">Under ₹50</option><option value="50-100">₹50 – ₹100</option><option value="100-200">₹100 – ₹200</option><option value="200-500">₹200 – ₹500</option><option value="500+">Above ₹500</option></select></div>' +
-      '<div class=sort-wrap><span class=sort-label>Sort:</span><select id=sortSelect><option value=discount-desc selected>Discount: High to Low</option><option value=price-asc>Price: Low to High</option><option value=price-desc>Price: High to Low</option><option value=title-asc>Title: A to Z</option></select></div>' +
-      '</div>' +
-      '</div>' +
-      '<div id=grid class=grid></div>' +
-      '<div id=noResults class=no-results style="display:none">No matching items found</div>' +
-      '<script>' +
-      'var rawItems = ' +
-      itemsJson +
-      ';' +
-      'function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}' +
-      'var brandCounts = {};' +
-      'rawItems.forEach(function(it){' +
-      'if(it.b){brandCounts[it.b]=(brandCounts[it.b]||0)+1;}' +
-      '});' +
-      'var brands = Object.keys(brandCounts).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"});});' +
-      'var brandWrap = document.getElementById("brandSelectWrap");' +
-      'var brandSel = document.getElementById("brandSelect");' +
-      'if(brands.length > 0){' +
-      'brandWrap.style.display = "flex";' +
-      'brands.forEach(function(b){' +
-      'var opt = document.createElement("option");' +
-      'opt.value = b;' +
-      'opt.textContent = b + " (" + brandCounts[b] + ")";' +
-      'brandSel.appendChild(opt);' +
-      '});' +
-      '}' +
-      'function render(list){' +
-      'var g=document.getElementById("grid");' +
-      'var nr=document.getElementById("noResults");' +
-      'if(!list.length){g.innerHTML="";nr.style.display="block";return;}' +
-      'nr.style.display="none";' +
-      'g.innerHTML=list.map(function(e){' +
-      'var st=esc(e.t);' +
-      'return "<a class=card href=\"https://www.amazon.in/dp/"+esc(e.a)+"\" target=_blank rel=noopener>"' +
-      '+ "<div class=img-wrap>" + (e.d?"<div class=discount-badge><span class=disc-pct>"+e.d+"%</span><span class=disc-off>Off</span></div>":"")' +
-      '+ "<img src=\""+esc(e.img)+"\" loading=lazy onerror=\"this.remove()\"></div>"' +
-      '+ "<div class=card-body>"' +
-      '+ (e.b?"<div class=brand-name>"+esc(e.b)+"</div>":"")' +
-      '+ "<div class=title title=\""+st+"\">"+st+"</div>"' +
-      '+ (e.pz?"<div class=pack-size>"+esc(e.pz)+"</div>":"")' +
-      '+ "<div class=price-wrap>"+(e.bp!==null?"<span class=price>₹"+e.bp+"</span>":"")+(e.lp&&e.lp!==e.bp?"<span class=mrp>₹"+e.lp+"</span>":"")+"</div></div></a>";' +
-      '}).join("");' +
-      '}' +
-      'function update(){' +
-      'var q=(document.getElementById("searchInput").value||"").trim().toLowerCase();' +
-      'var sm=document.getElementById("sortSelect").value;' +
-      'var selBrand=brandSel.value;' +
-      'var selPrice=document.getElementById("priceSelect").value;' +
-      'var list=rawItems.filter(function(it){' +
-      'if(q && (!it.t || it.t.toLowerCase().indexOf(q)===-1) && (!it.b || it.b.toLowerCase().indexOf(q)===-1)) return false;' +
-      'if(selBrand && it.b!==selBrand) return false;' +
-      'if(selPrice){' +
-      'if(it.bp===null||it.bp===undefined) return false;' +
-      'if(selPrice==="0-50") return it.bp<=50;' +
-      'if(selPrice==="50-100") return it.bp>50 && it.bp<=100;' +
-      'if(selPrice==="100-200") return it.bp>100 && it.bp<=200;' +
-      'if(selPrice==="200-500") return it.bp>200 && it.bp<=500;' +
-      'if(selPrice==="500+") return it.bp>500;' +
-      '}' +
-      'return true;' +
-      '});' +
-      'if(sm==="discount-desc"){list.sort(function(a,b){return b.d-a.d});}' +
-      'else if(sm==="price-asc"){list.sort(function(a,b){return ((a.bp===null||a.bp===undefined)?1e9:a.bp)-((b.bp===null||b.bp===undefined)?1e9:b.bp);});}' +
-      'else if(sm==="price-desc"){list.sort(function(a,b){return ((b.bp===null||b.bp===undefined)?-1:b.bp)-((a.bp===null||a.bp===undefined)?-1:a.bp);});}' +
-      'else if(sm==="title-asc"){list.sort(function(a,b){return (a.t||"").localeCompare(b.t||"");});}' +
-      'render(list);' +
-      'var cb=document.getElementById("countBadge");' +
-      'var isFiltered=q||selBrand||selPrice;' +
-      'cb.textContent=isFiltered ? (list.length+" of "+rawItems.length+" items") : (list.length+" items");' +
-      '}' +
-      'document.getElementById("searchInput").addEventListener("input",update);' +
-      'document.getElementById("sortSelect").addEventListener("change",update);' +
-      'document.getElementById("priceSelect").addEventListener("change",update);' +
-      'brandSel.addEventListener("change",update);' +
-      'update();' +
-      '<\/script></body></html>';
+
+    var html = [
+      '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">',
+      '<meta name="viewport" content="width=device-width,initial-scale=1">',
+      '<title>' + safeTitle + ' — ' + items.length + ' Deals</title>',
+      '<style>',
+      '*{box-sizing:border-box;margin:0;padding:0}',
+      'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6f8;color:#1a1a1a;padding:12px}',
+      '.header{background:#fff;padding:14px 16px;border-radius:8px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:10px}',
+      '.header-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}',
+      '.header-title{font-size:16px;font-weight:700;color:#0f1111}',
+      '.header-badge{background:#e8f0fe;color:#1a73e8;font-weight:600;font-size:12px;padding:4px 10px;border-radius:14px;white-space:nowrap}',
+      '.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}',
+      '.search-wrap{flex:2;min-width:180px}',
+      '.search-wrap input{width:100%;padding:8px 12px;border:1px solid #d0d7de;border-radius:6px;font-size:13px;outline:none;background:#f9f9f9;font-family:inherit;transition:border-color .15s,background .15s}',
+      '.search-wrap input:focus{border-color:#1a73e8;background:#fff}',
+      '.filter-wrap,.sort-wrap{display:flex;align-items:center;gap:6px;flex:1;min-width:140px}',
+      '.filter-label,.sort-label{font-size:12px;font-weight:600;color:#555;white-space:nowrap}',
+      '.filter-wrap select,.sort-wrap select{width:100%;padding:8px 10px;border:1px solid #d0d7de;border-radius:6px;font-size:13px;background:#fff;color:#111;outline:none;cursor:pointer;font-family:inherit}',
+      '.filter-wrap select:focus,.sort-wrap select:focus{border-color:#1a73e8}',
+      '.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}',
+      '@media(max-width:1024px){.grid{grid-template-columns:repeat(4,1fr);gap:8px}}',
+      '@media(max-width:768px){',
+      'body{padding:8px}',
+      '.header{padding:10px 12px;margin-bottom:8px;gap:8px}',
+      '.header-title{font-size:14px}',
+      '.controls{flex-direction:column;align-items:stretch;gap:6px}',
+      '.search-wrap{min-width:100%}',
+      '.search-wrap input{padding:8px 10px;font-size:12px}',
+      '.filter-wrap,.sort-wrap{min-width:100%;justify-content:space-between}',
+      '.filter-wrap select,.sort-wrap select{flex:1;padding:7px 10px;font-size:12px}',
+      '.grid{grid-template-columns:repeat(3,1fr);gap:6px}',
+      '}',
+      '.card{display:flex;flex-direction:column;background:#fff;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden;text-decoration:none;color:inherit;position:relative;transition:transform .15s,box-shadow .15s;cursor:pointer}',
+      '.card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.12);border-color:#cbd5e1}',
+      '.img-wrap{width:100%;height:140px;background:#fafafa;position:relative;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}',
+      '@media(max-width:768px){.img-wrap{height:105px;padding:4px}}',
+      '.img-wrap img{max-width:100%;max-height:100%;object-fit:contain}',
+      '.discount-badge{position:absolute;top:6px;left:6px;background:#058552;color:#fff;border-radius:4px;box-shadow:0 2px 5px rgba(5,133,82,.35);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 6px;text-align:center;line-height:1}',
+      '.disc-pct{font-size:12px;font-weight:800;letter-spacing:-0.2px}',
+      '.disc-off{font-size:9px;font-weight:700;margin-top:1px;letter-spacing:0.2px;opacity:.95}',
+      '@media(max-width:768px){',
+      '.discount-badge{top:4px;left:4px;padding:2px 5px}',
+      '.disc-pct{font-size:10px}',
+      '.disc-off{font-size:8px}',
+      '}',
+      '.card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1;justify-content:space-between;gap:6px}',
+      '@media(max-width:768px){.card-body{padding:6px 6px 8px;gap:4px}}',
+      '.brand-name{font-size:10px;font-weight:700;color:#565959;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '@media(max-width:768px){.brand-name{font-size:9px}}',
+      '.title{font-size:12px;font-weight:600;line-height:1.35;color:#0f1111;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;min-height:32px}',
+      '@media(max-width:768px){.title{font-size:11px;line-height:1.25;min-height:28px}}',
+      '.pack-size{font-size:11px;color:#565959;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '@media(max-width:768px){.pack-size{font-size:10px}}',
+      '.price-wrap{margin-top:auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}',
+      '.price{font-size:15px;font-weight:700;color:#0f1111}',
+      '@media(max-width:768px){.price{font-size:13px}}',
+      '.mrp{font-size:11px;color:#565959;text-decoration:line-through}',
+      '@media(max-width:768px){.mrp{font-size:10px}}',
+      '.no-results{text-align:center;padding:40px 20px;color:#666;font-size:14px;background:#fff;border-radius:8px;border:1px solid #e2e8f0}',
+      '</style></head><body>',
+      '<div class="header">',
+      '<div class="header-top">',
+      '<div class="header-title">' + safeTitle + '</div>',
+      '<div class="header-badge" id="countBadge">' + items.length + ' items</div>',
+      '</div>',
+      '<div class="controls">',
+      '<div class="search-wrap"><input type="search" id="searchInput" placeholder="Search deals..." autocomplete="off"></div>',
+      '<div class="filter-wrap" id="brandSelectWrap" style="display:none"><span class="filter-label">Brand:</span><select id="brandSelect"><option value="">All Brands</option></select></div>',
+      '<div class="filter-wrap" id="priceSelectWrap"><span class="filter-label">Price:</span><select id="priceSelect"><option value="">All Prices</option><option value="0-50">Under ₹50</option><option value="50-100">₹50 – ₹100</option><option value="100-200">₹100 – ₹200</option><option value="200-500">₹200 – ₹500</option><option value="500+">Above ₹500</option></select></div>',
+      '<div class="sort-wrap"><span class="sort-label">Sort:</span><select id="sortSelect"><option value="discount-desc" selected>Discount: High to Low</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="title-asc">Title: A to Z</option></select></div>',
+      '</div>',
+      '</div>',
+      '<div id="grid" class="grid"></div>',
+      '<div id="noResults" class="no-results" style="display:none">No matching items found</div>',
+      '<script>',
+      'var rawItems = ' + itemsJson + ';',
+      'function esc(s){return (s||\"\").replace(/&/g,\"&amp;\").replace(/</g,\"&lt;\").replace(/>/g,\"&gt;\").replace(/\"/g,\"&quot;\");}',
+      'var brandCounts = {};',
+      'rawItems.forEach(function(it){if(it.b){brandCounts[it.b]=(brandCounts[it.b]||0)+1;}});',
+      'var brands = Object.keys(brandCounts).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:\"base\"});});',
+      'var brandWrap = document.getElementById(\"brandSelectWrap\");',
+      'var brandSel = document.getElementById(\"brandSelect\");',
+      'if(brands.length > 0){',
+      '  brandWrap.style.display = \"flex\";',
+      '  brands.forEach(function(b){',
+      '    var opt = document.createElement(\"option\");',
+      '    opt.value = b;',
+      '    opt.textContent = b + \" (\" + brandCounts[b] + \")\";',
+      '    brandSel.appendChild(opt);',
+      '  });',
+      '}',
+      'function render(list){',
+      '  var g = document.getElementById(\"grid\");',
+      '  var nr = document.getElementById(\"noResults\");',
+      '  if(!list.length){ g.innerHTML=\"\"; nr.style.display=\"block\"; return; }',
+      '  nr.style.display=\"none\";',
+      '  g.innerHTML = list.map(function(e){',
+      '    var st = esc(e.t);',
+      '    var discBadge = e.d ? (\'<div class=\"discount-badge\"><span class=\"disc-pct\">\' + e.d + \'%</span><span class=\"disc-off\">Off</span></div>\') : \"\";',
+      '    var brandEl = e.b ? (\'<div class=\"brand-name\">\' + esc(e.b) + \'</div>\') : \"\";',
+      '    var packEl = e.pz ? (\'<div class=\"pack-size\">\' + esc(e.pz) + \'</div>\') : \"\";',
+      '    var priceEl = e.bp !== null ? (\'<span class=\"price\">₹\' + e.bp + \'</span>\') : \"\";',
+      '    var mrpEl = (e.lp && e.lp !== e.bp) ? (\'<span class=\"mrp\">₹\' + e.lp + \'</span>\') : \"\";',
+      '    return \'<a class=\"card\" href=\"https://www.amazon.in/dp/\' + esc(e.a) + \'\" target=\"_blank\" rel=\"noopener\">\' +',
+      '      \'<div class=\"img-wrap\">\' + discBadge + \'<img src=\"\' + esc(e.img) + \'\" loading=\"lazy\" onerror=\"this.remove()\"></div>\' +',
+      '      \'<div class=\"card-body\">\' + brandEl + \'<div class=\"title\" title=\"\' + st + \'\">\' + st + \'</div>\' + packEl +',
+      '      \'<div class=\"price-wrap\">\' + priceEl + mrpEl + \'</div></div></a>\';',
+      '  }).join(\"\");',
+      '}',
+      'function update(){',
+      '  var q = (document.getElementById(\"searchInput\").value || \"\").trim().toLowerCase();',
+      '  var sm = document.getElementById(\"sortSelect\").value;',
+      '  var selBrand = brandSel.value;',
+      '  var selPrice = document.getElementById(\"priceSelect\").value;',
+      '  var list = rawItems.filter(function(it){',
+      '    if(q && (!it.t || it.t.toLowerCase().indexOf(q)===-1) && (!it.b || it.b.toLowerCase().indexOf(q)===-1)) return false;',
+      '    if(selBrand && it.b !== selBrand) return false;',
+      '    if(selPrice){',
+      '      if(it.bp === null || it.bp === undefined) return false;',
+      '      if(selPrice === \"0-50\") return it.bp <= 50;',
+      '      if(selPrice === \"50-100\") return it.bp > 50 && it.bp <= 100;',
+      '      if(selPrice === \"100-200\") return it.bp > 100 && it.bp <= 200;',
+      '      if(selPrice === \"200-500\") return it.bp > 200 && it.bp <= 500;',
+      '      if(selPrice === \"500+\") return it.bp > 500;',
+      '    }',
+      '    return true;',
+      '  });',
+      '  if(sm === \"discount-desc\"){ list.sort(function(a,b){ return b.d - a.d; }); }',
+      '  else if(sm === \"price-asc\"){ list.sort(function(a,b){ return ((a.bp===null||a.bp===undefined)?1e9:a.bp) - ((b.bp===null||b.bp===undefined)?1e9:b.bp); }); }',
+      '  else if(sm === \"price-desc\"){ list.sort(function(a,b){ return ((b.bp===null||b.bp===undefined)?-1:b.bp) - ((a.bp===null||a.bp===undefined)?-1:a.bp); }); }',
+      '  else if(sm === \"title-asc\"){ list.sort(function(a,b){ return (a.t||\"\").localeCompare(b.t||\"\"); }); }',
+      '  render(list);',
+      '  var cb = document.getElementById(\"countBadge\");',
+      '  var isFiltered = q || selBrand || selPrice;',
+      '  cb.textContent = isFiltered ? (list.length + \" of \" + rawItems.length + \" items\") : (list.length + \" items\");',
+      '}',
+      'document.getElementById(\"searchInput\").addEventListener(\"input\", update);',
+      'document.getElementById(\"sortSelect\").addEventListener(\"change\", update);',
+      'document.getElementById(\"priceSelect\").addEventListener(\"change\", update);',
+      'brandSel.addEventListener(\"change\", update);',
+      'update();',
+      '<' + '/script></body></html>'
+    ].join('\n');
 
     var tab = (targetTab && !targetTab.closed) ? targetTab : window.open('', '_blank');
     if (tab) {
@@ -856,7 +849,6 @@
       alert('Popup blocked! Please allow popups for Amazon to view deals.');
     }
   }
-
   // Create UI Root Container
   var root = document.createElement('div');
   root.id = '__aznowFab';
@@ -877,140 +869,122 @@
   panel.appendChild(hdr);
 
   // Section 0: Discount Filter Pills (10%, 25%, 35%, 50%, 60%, 70%)
-  var discSec = document.createElement('div');
-  discSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
-  discSec.innerHTML =
-    '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Min Discount Filter</div>';
-  var pillRow = document.createElement('div');
-  pillRow.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;';
-  var pillButtons = [];
+  // Section 0: Side-by-Side Discount & Price Range Controls Row
+  var filterRow = document.createElement('div');
+  filterRow.style.cssText = 'display:flex;gap:8px;margin-bottom:10px;';
 
-  discountPillsData.forEach(function (pObj) {
-    var b = document.createElement('button');
-    b.textContent = pObj.label;
-    b.__pct = pObj.pct;
-    b.__node = pObj.node;
-    b.style.cssText =
-      'padding:6px 2px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid #cbd5e1;transition:all .12s;touch-action:manipulation;';
-    b.onclick = function () {
-      selectedMinDiscount = pObj.pct;
-      selectedDiscountNode = pObj.node;
-      if (selectedMinDiscount === 70) {
-        selectedPriceFacets = ['0-5000', '5000-10000'];
-      } else {
-        selectedPriceFacets = ['0-5000'];
-      }
-      updateDiscountPillsUI();
-      updatePricePillsUI();
-      updateCategoryUI();
-    };
-    pillButtons.push(b);
-    pillRow.appendChild(b);
+  // Left Column: Min Discount Dropdown
+  var discCol = document.createElement('div');
+  discCol.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:4px;';
+  var discLabel = document.createElement('div');
+  discLabel.textContent = 'Min Discount';
+  discLabel.style.cssText = 'font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;';
+  var discSelect = document.createElement('select');
+  discSelect.id = '__aznowDiscSelect';
+  discSelect.style.cssText =
+    'width:100%;padding:7px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;background:#f8fafc;outline:none;cursor:pointer;font-family:inherit;box-sizing:border-box;';
+
+  discountPillsData.forEach(function (d) {
+    var opt = document.createElement('option');
+    opt.value = d.pct;
+    opt.textContent = d.label + '+ Off';
+    discSelect.appendChild(opt);
   });
-  discSec.appendChild(pillRow);
-  panel.appendChild(discSec);
+  discSelect.value = String(selectedMinDiscount);
+  discCol.appendChild(discLabel);
+  discCol.appendChild(discSelect);
 
-  // Section 0.2: Price Range Filter Pills
-  var priceSec = document.createElement('div');
-  priceSec.style.cssText = 'display:flex;flex-direction:column;gap:5px;margin-bottom:10px;';
-  priceSec.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-      '<span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Price Range Filter</span>' +
-      '<span id="__aznowPriceHint" style="font-size:10px;font-weight:600;color:#2563eb;">Choose up to 2</span>' +
-    '</div>';
-  var priceRow = document.createElement('div');
-  priceRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;';
-  var pricePillButtons = [];
+  // Right Column: Price Range Dropdown
+  var priceCol = document.createElement('div');
+  priceCol.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:4px;';
+  var priceLabel = document.createElement('div');
+  priceLabel.textContent = 'Price Range';
+  priceLabel.style.cssText = 'font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;';
+  var priceSelect = document.createElement('select');
+  priceSelect.id = '__aznowPriceSelect';
+  priceSelect.style.cssText =
+    'width:100%;padding:7px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-weight:700;color:#0f1111;background:#f8fafc;outline:none;cursor:pointer;font-family:inherit;box-sizing:border-box;';
+  priceCol.appendChild(priceLabel);
+  priceCol.appendChild(priceSelect);
 
-  var priceRangeData = [
-    { label: 'Under ₹50', facet: '0-5000' },
-    { label: '₹50–₹100', facet: '5000-10000' },
-    { label: '₹100–₹200', facet: '10000-20000' },
-    { label: '₹200–₹500', facet: '20000-50000' },
-    { label: 'Above ₹500', facet: '50000-' }
-  ];
-  var selectedPriceFacets = ['0-5000', '5000-10000'];
+  filterRow.appendChild(discCol);
+  filterRow.appendChild(priceCol);
+  panel.appendChild(filterRow);
 
-  function handlePricePillClick(facet) {
-    if (selectedMinDiscount === 70) {
-      var idx = selectedPriceFacets.indexOf(facet);
-      if (idx !== -1) {
-        if (selectedPriceFacets.length > 1) {
-          selectedPriceFacets.splice(idx, 1);
-        }
-      } else {
-        if (selectedPriceFacets.length < 2) {
-          selectedPriceFacets.push(facet);
-        } else {
-          selectedPriceFacets.shift();
-          selectedPriceFacets.push(facet);
-        }
-      }
-    } else {
-      selectedPriceFacets = [facet];
-    }
-    updatePricePillsUI();
-  }
-
-  priceRangeData.forEach(function (pObj) {
-    var b = document.createElement('button');
-    b.textContent = pObj.label;
-    b.__facet = pObj.facet;
-    b.style.cssText =
-      'flex:1 1 calc(33.333% - 5px);min-width:85px;padding:6px 2px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid #cbd5e1;transition:all .12s;touch-action:manipulation;text-align:center;box-sizing:border-box;';
-    b.onclick = function () {
-      handlePricePillClick(pObj.facet);
-    };
-    pricePillButtons.push(b);
-    priceRow.appendChild(b);
-  });
-  priceSec.appendChild(priceRow);
-  panel.appendChild(priceSec);
-
-  // Section 0.5: Global Deals Fetch Button
+  // Global Deals Fetch Button
   var globalBtn = document.createElement('button');
   globalBtn.style.cssText =
     'width:100%;padding:10px 12px;margin-bottom:10px;background:#058552;border:1px solid #046c42;border-radius:8px;font-size:12.5px;font-weight:700;color:#ffffff;cursor:pointer;text-align:center;box-shadow:0 2px 6px rgba(5,133,82,0.25);transition:all .15s;touch-action:manipulation;';
   panel.appendChild(globalBtn);
 
   var quickKwHdr = null;
-  function updatePricePillsUI() {
-    var hintEl = document.getElementById('__aznowPriceHint');
-    if (hintEl) {
-      hintEl.textContent = selectedMinDiscount === 70 ? 'Choose up to 2' : 'Choose 1';
-    }
-    pricePillButtons.forEach(function (b) {
-      var active = selectedPriceFacets.indexOf(b.__facet) !== -1;
-      b.style.background = active ? '#058552' : '#f8fafc';
-      b.style.color = active ? '#ffffff' : '#334155';
-      b.style.borderColor = active ? '#046c42' : '#cbd5e1';
-    });
+  var selectedPriceFacets = ['0-5000'];
 
-    var labels = selectedPriceFacets.map(function (f) {
-      for (var k = 0; k < priceRangeData.length; k++) {
-        if (priceRangeData[k].facet === f) return priceRangeData[k].label;
+  function getSelectedPriceDisplay() {
+    var val = priceSelect.value;
+    for (var i = 0; i < priceSelect.options.length; i++) {
+      if (priceSelect.options[i].value === val) {
+        return priceSelect.options[i].text.replace(/\s*\(.*?\)/, '').trim();
       }
-      return f;
-    }).join(', ');
-
-    globalBtn.textContent = '🔥 Fetch Deals (' + selectedMinDiscount + '%+ Off | ' + labels + ')';
+    }
+    return 'Deals';
   }
 
-  function updateDiscountPillsUI() {
-    pillButtons.forEach(function (b) {
-      var active = b.__pct === selectedMinDiscount;
-      b.style.background = active ? '#058552' : '#f8fafc';
-      b.style.color = active ? '#ffffff' : '#334155';
-      b.style.borderColor = active ? '#046c42' : '#cbd5e1';
-    });
+  function updateGlobalButtonUI() {
+    var pLabel = getSelectedPriceDisplay();
+    globalBtn.textContent = '🔥 Fetch Deals (' + selectedMinDiscount + '%+ Off | ' + pLabel + ')';
     if (quickKwHdr) {
       quickKwHdr.textContent = '⚡ Quick Keywords (' + selectedMinDiscount + '%+ Off)';
     }
-    updatePricePillsUI();
   }
-  updateDiscountPillsUI();
 
-  // Tab Navigation (Segmented Switcher)
+  function populatePriceDropdown(discountPct) {
+    priceSelect.innerHTML = '';
+    var opts = [];
+    if (discountPct === 70) {
+      opts.push({ label: 'Under ₹100 (₹0–₹100)', val: '0-5000,5000-10000' });
+    }
+    opts.push({ label: 'Under ₹50', val: '0-5000' });
+    opts.push({ label: '₹50 – ₹100', val: '5000-10000' });
+    opts.push({ label: '₹100 – ₹200', val: '10000-20000' });
+    opts.push({ label: '₹200 – ₹500', val: '20000-50000' });
+    opts.push({ label: 'Above ₹500', val: '50000-' });
+
+    opts.forEach(function (o) {
+      var opt = document.createElement('option');
+      opt.value = o.val;
+      opt.textContent = o.label;
+      priceSelect.appendChild(opt);
+    });
+
+    // Default to the first option
+    priceSelect.value = opts[0].val;
+    selectedPriceFacets = opts[0].val.split(',');
+    updateGlobalButtonUI();
+  }
+
+  discSelect.onchange = function () {
+    var pct = parseInt(discSelect.value, 10);
+    selectedMinDiscount = pct;
+    for (var i = 0; i < discountPillsData.length; i++) {
+      if (discountPillsData[i].pct === pct) {
+        selectedDiscountNode = discountPillsData[i].node;
+        break;
+      }
+    }
+    populatePriceDropdown(pct);
+    updateCategoryUI();
+  };
+
+  priceSelect.onchange = function () {
+    selectedPriceFacets = priceSelect.value.split(',');
+    updateGlobalButtonUI();
+  };
+
+  // Populate initial price options for 50%
+  populatePriceDropdown(50);
+
+    // Tab Navigation (Segmented Switcher)
   var tabNav = document.createElement('div');
   tabNav.style.cssText =
     'display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px;background:#f1f5f9;padding:3px;border-radius:8px;';
@@ -1434,15 +1408,8 @@
     clearBtn.style.pointerEvents = disabled ? 'none' : 'auto';
     clearBtn.style.opacity = disabled ? '0.5' : '1';
 
-    pillButtons.forEach(function (b) {
-      b.disabled = disabled;
-      b.style.opacity = disabled ? '0.6' : '1';
-    });
-
-    pricePillButtons.forEach(function (b) {
-      b.disabled = disabled;
-      b.style.opacity = disabled ? '0.6' : '1';
-    });
+    discSelect.disabled = disabled;
+    priceSelect.disabled = disabled;
 
     if (typeof quickKwButtons !== 'undefined' && Array.isArray(quickKwButtons)) {
       quickKwButtons.forEach(function (btn) {
@@ -1461,38 +1428,23 @@
     });
   }
 
-  // 1. Global Store Fetch Handler (/s?i=amazontez with dynamic selected price brackets)
+  // 1. Global Store Fetch Handler (/s?i=amazontez with dynamic selected price brackets, Concurrency = 2)
   globalBtn.onclick = async function () {
-    var labels = selectedPriceFacets.map(function (f) {
-      for (var k = 0; k < priceRangeData.length; k++) {
-        if (priceRangeData[k].facet === f) return priceRangeData[k].label;
-      }
-      return f;
-    }).join(' & ');
-
-    var targetTab = createLoadingTab('Loading Deals: ' + labels + ' (' + selectedMinDiscount + '%+ Off)...');
+    var pLabel = getSelectedPriceDisplay();
+    var targetTab = createLoadingTab('Loading Deals: ' + pLabel + ' (' + selectedMinDiscount + '%+ Off)...');
     setAllControlsDisabled(true);
     try {
       var seenAsins = {};
       var items = [];
+      var facets = selectedPriceFacets.slice();
 
-      for (var bIdx = 0; bIdx < selectedPriceFacets.length; bIdx++) {
-        var facet = selectedPriceFacets[bIdx];
-        var facetLabel = '';
-        for (var k = 0; k < priceRangeData.length; k++) {
-          if (priceRangeData[k].facet === facet) {
-            facetLabel = priceRangeData[k].label;
-            break;
-          }
-        }
-
-        var MAX_PAGES_THIS_BRACKET = 10;
+      async function fetchFacetBracket(facet, facetName) {
         var page = 1;
+        var MAX_PAGES = 10;
+        var hasMore = true;
 
-        while (page <= MAX_PAGES_THIS_BRACKET) {
-          globalBtn.textContent =
-            '(' + (bIdx + 1) + '/' + selectedPriceFacets.length + ') ' + facetLabel + ' P.' + page + ' (' + items.length + ' found)...';
-
+        while (hasMore && page <= MAX_PAGES) {
+          globalBtn.textContent = 'Fetching ' + facetName + ' P.' + page + ' (' + items.length + ' deals)...';
           var html = '';
           try {
             var r = await fetch(buildGlobalSearchUrl(selectedDiscountNode, page, facet), { credentials: 'include' });
@@ -1515,21 +1467,107 @@
 
           var doc = new DOMParser().parseFromString(html, 'text/html');
           var nextLink = doc.querySelector('a[href*="page=' + (page + 1) + '"], .s-pagination-next:not(.s-pagination-disabled)');
-          var isLast = !nextLink || addedOnPage === 0;
-
-          if (isLast) break;
+          if (!nextLink || addedOnPage === 0) {
+            hasMore = false;
+            break;
+          }
 
           page++;
           await sleep(250);
         }
-        await sleep(200);
       }
 
-      openResultsTab('Amazon Now (' + selectedMinDiscount + '%+ Off | ' + labels + ')', items, targetTab);
+      // Concurrency = 2:
+      // If 2 price brackets are selected (e.g. Under 50 & 50-100 for Under ₹100), fetch them both in parallel!
+      if (facets.length >= 2) {
+        await Promise.all([
+          fetchFacetBracket(facets[0], 'Under ₹50'),
+          fetchFacetBracket(facets[1], '₹50–₹100')
+        ]);
+      } else if (facets.length === 1) {
+        // Single bracket: Page 1 first, then subsequent pages in batches of 2 (concurrency = 2)
+        var facet = facets[0];
+        globalBtn.textContent = 'Fetching ' + pLabel + ' P.1 (' + items.length + ' deals)...';
+        var p1Html = '';
+        try {
+          var r1 = await fetch(buildGlobalSearchUrl(selectedDiscountNode, 1, facet), { credentials: 'include' });
+          if (r1.ok) p1Html = await r1.text();
+        } catch (e) {}
+
+        if (p1Html) {
+          var p1Parsed = parseHtmlSearchPage(p1Html);
+          var p1Added = 0;
+          for (var j = 0; j < p1Parsed.items.length; j++) {
+            var prod = p1Parsed.items[j];
+            if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
+              seenAsins[prod.a] = 1;
+              items.push(prod);
+              p1Added++;
+            }
+          }
+
+          var doc1 = new DOMParser().parseFromString(p1Html, 'text/html');
+          var next1 = doc1.querySelector('a[href*="page=2"], .s-pagination-next:not(.s-pagination-disabled)');
+
+          if (next1 && p1Added > 0) {
+            var page = 2;
+            var MAX_PAGES = 10;
+            var BATCH_SIZE = 2;
+            var hasMore = true;
+
+            while (hasMore && page <= MAX_PAGES) {
+              var batch = [];
+              for (var b = 0; b < BATCH_SIZE && page + b <= MAX_PAGES; b++) {
+                batch.push(page + b);
+              }
+
+              globalBtn.textContent = 'Fetching ' + pLabel + ' P.' + batch.join(', P.') + ' (' + items.length + ' deals)...';
+
+              var results = await Promise.all(
+                batch.map(function (p) {
+                  return fetch(buildGlobalSearchUrl(selectedDiscountNode, p, facet), { credentials: 'include' })
+                    .then(function (r) { return r.ok ? r.text() : ''; })
+                    .catch(function () { return ''; });
+                })
+              );
+
+              var shouldStop = false;
+              for (var i = 0; i < results.length; i++) {
+                var h = results[i];
+                if (!h) { shouldStop = true; break; }
+                var pp = parseHtmlSearchPage(h);
+                if (pp.totalCards === 0) { shouldStop = true; break; }
+
+                var added = 0;
+                for (var j = 0; j < pp.items.length; j++) {
+                  var prod = pp.items[j];
+                  if (prod.d >= selectedMinDiscount && !seenAsins[prod.a]) {
+                    seenAsins[prod.a] = 1;
+                    items.push(prod);
+                    added++;
+                  }
+                }
+
+                var d = new DOMParser().parseFromString(h, 'text/html');
+                var nl = d.querySelector('a[href*="page=' + (batch[i] + 1) + '"], .s-pagination-next:not(.s-pagination-disabled)');
+                if (!nl || added === 0) {
+                  shouldStop = true;
+                  break;
+                }
+              }
+
+              if (shouldStop) break;
+              page += batch.length;
+              await sleep(250);
+            }
+          }
+        }
+      }
+
+      openResultsTab('Amazon Now (' + selectedMinDiscount + '%+ Off | ' + pLabel + ')', items, targetTab);
     } finally {
       setAllControlsDisabled(false);
-      updateDiscountPillsUI();
-      updatePricePillsUI();
+      updateGlobalButtonUI();
       updateCategoryUI();
     }
   };
@@ -1574,7 +1612,8 @@
             var p1Prod = p1Parsed.items[i];
             if (!seenAsins[p1Prod.a]) {
               seenAsins[p1Prod.a] = 1;
-              items.push(p1Prod); // Always display all Page 1 products!
+              // Always display all Page 1 products!
+              items.push(p1Prod);
             }
             if (p1Prod.d >= selectedMinDiscount) {
               p1DealsCount++;
@@ -1674,88 +1713,42 @@
         return item.name;
       })
       .join(' & ');
+
     var targetTab = createLoadingTab('Scanning ' + catNames + '...');
     setAllControlsDisabled(true);
-
     try {
       var seenAsins = {};
       var items = [];
-      var catNames = selectedCategories
-        .map(function (item) {
-          return item.name;
-        })
-        .join(' & ');
+      var catQueue = selectedCategories.slice();
+      var completedCount = 0;
+      var totalCount = selectedCategories.length;
 
-      for (var cIdx = 0; cIdx < selectedCategories.length; cIdx++) {
-        var curCat = selectedCategories[cIdx];
-        fetchCatBtn.textContent =
-          '(' + (cIdx + 1) + '/' + selectedCategories.length + ') ' + curCat.name + ' P1 (' + items.length + ')';
+      async function processCategoryWorker() {
+        while (catQueue.length > 0) {
+          var curCat = catQueue.shift();
+          if (!curCat) break;
 
-        // 1. Fetch Page 1 (offset 0)
-        var p1Json = null;
-        try {
-          var p1Res = await fetch(buildCategoryUrl(curCat.nodeId, 0), { credentials: 'include' });
-          if (p1Res.ok) p1Json = await p1Res.json();
-        } catch (e) {}
+          fetchCatBtn.textContent =
+            '(' + (completedCount + 1) + '/' + totalCount + ') ' + curCat.name + ' P1 (' + items.length + ' deals)';
 
-        if (!p1Json || !p1Json.data) continue;
+          // 1. Fetch Page 1 (offset 0)
+          var p1Json = null;
+          try {
+            var p1Res = await fetch(buildCategoryUrl(curCat.nodeId, 0), { credentials: 'include' });
+            if (p1Res.ok) p1Json = await p1Res.json();
+          } catch (e) {}
 
-        var p1Data = p1Json.data;
-        var p1Widgets = p1Data.widgets || [];
-        var p1DealsCount = 0;
+          if (p1Json && p1Json.data) {
+            var p1Data = p1Json.data;
+            var p1Widgets = p1Data.widgets || [];
+            var p1DealsCount = 0;
 
-        for (var w = 0; w < p1Widgets.length; w++) {
-          var prods = (p1Widgets[w].data && p1Widgets[w].data.products) || [];
-          for (var p = 0; p < prods.length; p++) {
-            var prod = parseProduct(prods[p], curCat.name);
-            if (prod && prod.a) {
-              // Always display all Page 1 products!
-              if (!seenAsins[prod.a]) {
-                seenAsins[prod.a] = prod;
-                items.push(prod);
-              } else {
-                var existing = seenAsins[prod.a];
-                if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
-                  existing.c.push(curCat.name);
-                }
-              }
-              if (prod.d >= 50) {
-                p1DealsCount++;
-              }
-            }
-          }
-        }
-
-        var p1Meta = p1Data.metadata || {};
-        var hasMoreP1 = p1Meta.hasMoreWidgets !== false;
-
-        // 2. Fetch Page 2+ (offset 1+) ONLY if Page 1 has at least 3 items with >=50% off
-        if (p1DealsCount >= 3 && hasMoreP1) {
-          var offset = typeof p1Meta.nextOffset === 'number' && p1Meta.nextOffset > 0 ? p1Meta.nextOffset : 1;
-          var MAX_CAT_PAGES = 6;
-          var hasMore = true;
-
-          while (hasMore && offset < MAX_CAT_PAGES) {
-            fetchCatBtn.textContent =
-              '(' + (cIdx + 1) + '/' + selectedCategories.length + ') ' + curCat.name + ' P' + (offset + 1) + ' (' + items.length + ')';
-
-            var json = null;
-            try {
-              var res = await fetch(buildCategoryUrl(curCat.nodeId, offset), { credentials: 'include' });
-              if (res.ok) json = await res.json();
-            } catch (e) {}
-
-            if (!json || !json.data) break;
-
-            var data = json.data;
-            var widgets = data.widgets || [];
-            var prodsCount = 0;
-
-            for (var w = 0; w < widgets.length; w++) {
-              var prods = (widgets[w].data && widgets[w].data.products) || [];
+            for (var w = 0; w < p1Widgets.length; w++) {
+              var prods = (p1Widgets[w].data && p1Widgets[w].data.products) || [];
               for (var p = 0; p < prods.length; p++) {
                 var prod = parseProduct(prods[p], curCat.name);
-                if (prod && prod.a && prod.d >= 50) {
+                if (prod && prod.a) {
+                  // Always display all Page 1 products!
                   if (!seenAsins[prod.a]) {
                     seenAsins[prod.a] = prod;
                     items.push(prod);
@@ -1765,26 +1758,83 @@
                       existing.c.push(curCat.name);
                     }
                   }
-                  prodsCount++;
+                  if (prod.d >= selectedMinDiscount) {
+                    p1DealsCount++;
+                  }
                 }
               }
             }
 
-            var meta = data.metadata || {};
-            if (meta.hasMoreWidgets === false || prodsCount === 0) break;
+            var p1Meta = p1Data.metadata || {};
+            var hasMoreP1 = p1Meta.hasMoreWidgets !== false;
 
-            if (typeof meta.nextOffset === 'number' && meta.nextOffset > offset) {
-              offset = meta.nextOffset;
-            } else {
-              offset++;
+            // 2. Fetch Page 2+ (offset 1+) ONLY if Page 1 has at least 3 items with >= min discount
+            if (p1DealsCount >= 3 && hasMoreP1) {
+              var offset = typeof p1Meta.nextOffset === 'number' && p1Meta.nextOffset > 0 ? p1Meta.nextOffset : 1;
+              var MAX_CAT_PAGES = 6;
+              var hasMore = true;
+
+              while (hasMore && offset < MAX_CAT_PAGES) {
+                fetchCatBtn.textContent =
+                  '(' + (completedCount + 1) + '/' + totalCount + ') ' + curCat.name + ' P' + (offset + 1) + ' (' + items.length + ' deals)';
+
+                var json = null;
+                try {
+                  var res = await fetch(buildCategoryUrl(curCat.nodeId, offset), { credentials: 'include' });
+                  if (res.ok) json = await res.json();
+                } catch (e) {}
+
+                if (!json || !json.data) break;
+
+                var data = json.data;
+                var widgets = data.widgets || [];
+                var prodsCount = 0;
+
+                for (var w = 0; w < widgets.length; w++) {
+                  var prods = (widgets[w].data && widgets[w].data.products) || [];
+                  for (var p = 0; p < prods.length; p++) {
+                    var prod = parseProduct(prods[p], curCat.name);
+                    if (prod && prod.a && prod.d >= selectedMinDiscount) {
+                      if (!seenAsins[prod.a]) {
+                        seenAsins[prod.a] = prod;
+                        items.push(prod);
+                      } else {
+                        var existing = seenAsins[prod.a];
+                        if (curCat.name && existing.c && existing.c.indexOf(curCat.name) === -1) {
+                          existing.c.push(curCat.name);
+                        }
+                      }
+                      prodsCount++;
+                    }
+                  }
+                }
+
+                var meta = data.metadata || {};
+                if (meta.hasMoreWidgets === false || prodsCount === 0) break;
+
+                if (typeof meta.nextOffset === 'number' && meta.nextOffset > offset) {
+                  offset = meta.nextOffset;
+                } else {
+                  offset++;
+                }
+
+                await sleep(250);
+              }
             }
-
-            await sleep(250);
           }
-        }
 
-        await sleep(150);
+          completedCount++;
+          await sleep(150);
+        }
       }
+
+      // Concurrency 2: Process categories with 2 concurrent workers in parallel!
+      var numWorkers = Math.min(2, selectedCategories.length);
+      var workers = [];
+      for (var w = 0; w < numWorkers; w++) {
+        workers.push(processCategoryWorker());
+      }
+      await Promise.all(workers);
 
       openResultsTab(catNames + ' (' + selectedMinDiscount + '%+ Off)', items, targetTab);
     } finally {
