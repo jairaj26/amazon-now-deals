@@ -148,4 +148,6 @@ var categoriesRaw =
 
 ## 📄 License
 
-MIT License. Free to use, modify, and distribute.
+This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Jairaj Munirathnam. Free to use, modify, and distribute with attribution.

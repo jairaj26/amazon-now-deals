@@ -1,3 +1,9 @@
+"""
+Amazon Now Deals Scraper & Telegram Bot
+Copyright (c) 2026 Jairaj Munirathnam
+Licensed under the MIT License (https://opensource.org/licenses/MIT)
+"""
+
 import argparse
 from datetime import datetime, timezone, timedelta
 import json

@@ -1,14 +1,17 @@
-/**
- * Amazon Now Deals Explorer (v2 - Hybrid /s Global Filter + Tez Category & Keyword API)
+/*!
+ * Amazon Now Deals Explorer
+ * https://github.com/jairaj26/amazon-now-deals
+ *
+ * Copyright (c) 2026 Jairaj Munirathnam
+ * Released under the MIT License
+ * https://opensource.org/licenses/MIT
  *
  * Features:
- * - Global Deals Fetcher: Fetches all items across Amazon Now using server-side discount filters (/s?i=amazontez&srs=100147972031)
- * - Sidebar Discount Pills: 50%, 60%, 70% off (Defaults to 50% off)
- * - Keyword Search API fetcher: Search any keyword via Tez JSON API and filter by chosen discount
- * - Multi-Category Selection: Select up to 3 subcategories per fetch
- * - Zero hardcoded location/headers: Dynamically detects brandId and uses active session cookies
- * - Smart Brand Extraction: Infers brands from titles, product metadata, and dictionary
- * - Results Grid Tab: Filter by brand, category, search, and sort by discount/price
+ * - Global Deals Slicer: Uses server-side p_36 price brackets & discount refiners (/s?i=amazontez)
+ * - Sidebar Controls: 50%, 60%, 70% off with clean price tiers (Under ₹50, ₹50-₹100, etc.)
+ * - Keyword Search: Full pagination with instant deal capture
+ * - Category Explorer: Multi-subcategory concurrent worker scanning
+ * - Live Results Grid: Dynamic filtering by brand, category, search, and sorting
  */
 
 (function () {
